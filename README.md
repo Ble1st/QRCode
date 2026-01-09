@@ -391,7 +391,7 @@ Jedes Release enthält:
 sha256sum -c qr-generator.apk.sha256sum
 ```
 
-Weitere Informationen zur CI/CD Pipeline finden Sie in [.github/README.md](.github/README.md).
+Weitere Informationen zur CI/CD Pipeline finden Sie in [.github/CI_CD.md](.github/CI_CD.md).
 
 ---
 
