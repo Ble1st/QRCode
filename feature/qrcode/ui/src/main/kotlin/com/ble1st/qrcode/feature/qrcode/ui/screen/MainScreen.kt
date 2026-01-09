@@ -32,7 +32,9 @@ import com.ble1st.qrcode.feature.qrcode.ui.viewmodel.QRCodeViewModel
 @Composable
 fun MainScreen(
     viewModel: QRCodeViewModel = hiltViewModel(),
-    onSaveClick: () -> Unit = {}
+    onSaveClick: () -> Unit = {},
+    onSaveToGalleryClick: () -> Unit = {},
+    onShareClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var inputText by remember { mutableStateOf("") }
@@ -97,12 +99,31 @@ fun MainScreen(
                 )
             }
             
-            // Save Button
-            Button(
-                onClick = onSaveClick,
-                modifier = Modifier.fillMaxWidth()
+            // Action Buttons
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Speichern")
+                Button(
+                    onClick = onSaveClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Speicherplatz wählen")
+                }
+                
+                Button(
+                    onClick = onSaveToGalleryClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("In Galerie speichern")
+                }
+                
+                Button(
+                    onClick = onShareClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Teilen")
+                }
             }
         }
     }

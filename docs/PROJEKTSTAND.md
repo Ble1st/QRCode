@@ -1,8 +1,8 @@
 # Projektstand: QR-Code Generator
 
 **Stand:** 9. Januar 2026  
-**Version:** 1.0.0  
-**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben
+**Version:** 1.0.1  
+**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert
 
 ## Übersicht
 
@@ -111,8 +111,9 @@ feature:qrcode:ui
 - ✅ **QR-Code Generierung:** Generierung von QR-Codes aus eingegebenem Text
 - ✅ **QR-Code Anzeige:** Visuelle Darstellung des generierten QR-Codes
 - ✅ **Dateispeicherung:** Speicherung des QR-Codes als PNG-Bilddatei
-  - ✅ **Storage Access Framework (SAF):** Benutzer kann Speicherort selbst auswählen
-  - ✅ **Fallback:** Automatische Speicherung in MediaStore/File API
+  - ✅ **Speicherplatz wählen:** Benutzer kann Speicherort selbst auswählen (Storage Access Framework)
+  - ✅ **In Galerie speichern:** Direkte Speicherung in Galerie über MediaStore API
+  - ✅ **Teilen:** QR-Code kann über alle Share-Apps geteilt werden (WhatsApp, E-Mail, etc.)
 
 ### Technische Features
 
@@ -307,12 +308,24 @@ Die App folgt Clean Architecture Prinzipien mit klarer Trennung der Schichten:
 
 ### Dateispeicherung
 
-- **Primär:** Storage Access Framework (SAF)
+- **Speicherplatz wählen:** Storage Access Framework (SAF)
   - Benutzer wählt Speicherort selbst aus
   - Keine Runtime-Permissions erforderlich
-- **Fallback:** MediaStore API (Android 10+) oder File API (ältere Versionen)
-- **Implementierung:** `FileStorageManager` in `feature:qrcode:data`
-- **Format:** PNG mit 100% Qualität
+  - Implementierung: `ActivityResultContracts.CreateDocument` in `MainActivity`
+  
+- **In Galerie speichern:** MediaStore API (Android 10+) oder File API (ältere Versionen)
+  - Direkte Speicherung in Galerie ohne Benutzerinteraktion
+  - Datei wird in `Pictures/QRCode` gespeichert
+  - Automatisch in Galerie-App sichtbar
+  - Implementierung: `FileStorageManager.saveQRCodeToFile()` in `feature:qrcode:data`
+  
+- **Teilen:** FileProvider-basierte Share-Funktion
+  - Erstellt temporäre Datei im Cache-Verzeichnis
+  - Verwendet FileProvider für sichere URI-Freigabe
+  - Unterstützt alle Share-Apps (WhatsApp, E-Mail, etc.)
+  - Implementierung: `MainActivity.shareQRCode()`
+  
+- **Format:** PNG mit 100% Qualität für alle Optionen
 
 ### UI/UX
 
@@ -441,7 +454,8 @@ Alle Module sind in `settings.gradle.kts` registriert:
 Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Architektur umgewandelt. Die Implementierung folgt modernen Android-Best-Practices und Clean Architecture Prinzipien. Die App ist bereit für weitere Entwicklung und Erweiterungen.
 
 **Status:** ✅ Modulare Architektur vollständig implementiert  
-**Build-Status:** ✅ Alle Build-Fehler behoben, Build erfolgreich
+**Build-Status:** ✅ Alle Build-Fehler behoben, Build erfolgreich  
+**Features:** ✅ Speicher- und Teilen-Funktionen erweitert (Iteration 12)
 
 ## Aktuelle Build-Probleme & Lösungen
 
@@ -461,6 +475,18 @@ Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Archit
 - **Status:** ✅ Kotlin-Version angepasst, kompatibel mit Hilt
 
 **Details:** Siehe `docs/ITERATIONEN.md` für vollständige Dokumentation aller Iterationen.
+
+### Iteration 12: QR-Code Speicher- und Teilen-Funktionen erweitert (9. Januar 2026)
+- **Feature:** Drei separate Speicher-/Teilen-Optionen hinzugefügt
+- **Optionen:**
+  1. Speicherplatz wählen (SAF-Dialog)
+  2. In Galerie speichern (direkte Speicherung)
+  3. Teilen (Share-Dialog mit allen Apps)
+- **Technische Details:**
+  - FileProvider für sichere Datei-Freigabe konfiguriert
+  - ViewModel erweitert um `saveQRCodeToGallery()` und `getQRCodeBitmap()`
+  - MainActivity erweitert um `shareQRCode()` Funktion
+- **Status:** ✅ Alle drei Optionen funktionieren korrekt
 
 ## Build-Konfiguration
 

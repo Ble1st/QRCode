@@ -90,4 +90,36 @@ class QRCodeViewModel @Inject constructor(
             }
         }
     }
+    
+    fun saveQRCodeToGallery() {
+        val bitmap = _uiState.value.qrCodeBitmap
+        if (bitmap == null) {
+            Timber.w("No QR code bitmap available to save")
+            _uiState.update { it.copy(errorMessage = "Kein QR-Code zum Speichern vorhanden") }
+            return
+        }
+        
+        viewModelScope.launch {
+            try {
+                val result = saveQRCodeUseCase(bitmap, null, null)
+                when (result) {
+                    is StorageResult.Success -> {
+                        Timber.d("QR code saved to gallery successfully: ${result.filePath}")
+                        _uiState.update { it.copy(errorMessage = null) }
+                    }
+                    is StorageResult.Error -> {
+                        Timber.e("Failed to save QR code to gallery: ${result.message}")
+                        _uiState.update { it.copy(errorMessage = "Speichern in Galerie fehlgeschlagen: ${result.message}") }
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Exception while saving QR code to gallery")
+                _uiState.update { it.copy(errorMessage = "Fehler beim Speichern in Galerie: ${e.message}") }
+            }
+        }
+    }
+    
+    fun getQRCodeBitmap(): android.graphics.Bitmap? {
+        return _uiState.value.qrCodeBitmap
+    }
 }

@@ -1101,7 +1101,256 @@ Nach der Änderung sollte der Build erfolgreich sein:
 
 ---
 
-## Iteration 12: [Zukünftige Iterationen]
+## Iteration 12: QR-Code Speicher- und Teilen-Funktionen erweitert
+
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Erweiterung der QR-Code-Speicherfunktionen um drei Optionen: Speicherplatz selbst wählen, direkt in Galerie speichern und QR-Code teilen.
+
+### Durchgeführte Änderungen
+
+**1. UI erweitert - Drei separate Buttons**
+
+**Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/screen/MainScreen.kt`
+
+**Änderung:**
+- Ein einzelner "Speichern"-Button wurde durch drei separate Buttons ersetzt:
+  - "Speicherplatz wählen" - Öffnet SAF-Dialog
+  - "In Galerie speichern" - Speichert direkt in Galerie
+  - "Teilen" - Öffnet Share-Dialog
+
+**Begründung:**
+- Bessere Benutzerfreundlichkeit durch klare Optionen
+- Jede Funktion hat einen eigenen, eindeutigen Button
+- Benutzer können schnell die gewünschte Aktion auswählen
+
+**2. ViewModel erweitert**
+
+**Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/viewmodel/QRCodeViewModel.kt`
+
+**Neue Funktionen:**
+- `saveQRCodeToGallery()`: Speichert QR-Code direkt in die Galerie über MediaStore API
+- `getQRCodeBitmap()`: Gibt das aktuelle QR-Code-Bitmap zurück (für Share-Funktion)
+
+**Implementierung:**
+```kotlin
+fun saveQRCodeToGallery() {
+    val bitmap = _uiState.value.qrCodeBitmap
+    if (bitmap == null) {
+        _uiState.update { it.copy(errorMessage = "Kein QR-Code zum Speichern vorhanden") }
+        return
+    }
+    
+    viewModelScope.launch {
+        try {
+            val result = saveQRCodeUseCase(bitmap, null, null)
+            when (result) {
+                is StorageResult.Success -> {
+                    _uiState.update { it.copy(errorMessage = null) }
+                }
+                is StorageResult.Error -> {
+                    _uiState.update { it.copy(errorMessage = "Speichern in Galerie fehlgeschlagen: ${result.message}") }
+                }
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(errorMessage = "Fehler beim Speichern in Galerie: ${e.message}") }
+        }
+    }
+}
+
+fun getQRCodeBitmap(): Bitmap? {
+    return _uiState.value.qrCodeBitmap
+}
+```
+
+**Begründung:**
+- Trennung der Logik für verschiedene Speicher-Optionen
+- Wiederverwendbare Funktion für Share-Funktion
+- Konsistente Fehlerbehandlung
+
+**3. MainActivity erweitert - Share-Funktionalität**
+
+**Datei:** `app/src/main/kotlin/com/ble1st/qrcode/MainActivity.kt`
+
+**Neue Funktionen:**
+- `shareQRCode()`: Erstellt temporäre Datei und öffnet Share-Dialog
+
+**Implementierung:**
+```kotlin
+private fun shareQRCode(viewModel: QRCodeViewModel) {
+    val bitmap = viewModel.getQRCodeBitmap()
+    if (bitmap == null) return
+    
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            // Create temporary file in cache directory
+            val cacheDir = File(cacheDir, "qrcode")
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs()
+            }
+            
+            val fileName = "QRCode_${getTimestamp()}.png"
+            val file = File(cacheDir, fileName)
+            
+            // Save bitmap to file
+            FileOutputStream(file).use { outputStream ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                outputStream.flush()
+            }
+            
+            // Get URI using FileProvider
+            val uri = FileProvider.getUriForFile(
+                this@MainActivity,
+                "${packageName}.fileprovider",
+                file
+            )
+            
+            // Create share intent
+            val shareIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_STREAM, uri)
+                type = "image/png"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            
+            // Launch share dialog
+            val chooserIntent = Intent.createChooser(shareIntent, "QR-Code teilen")
+            chooserIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            startActivity(chooserIntent)
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to share QR code")
+        }
+    }
+}
+```
+
+**Begründung:**
+- Verwendet FileProvider für sichere URI-Freigabe (Android Best Practice)
+- Temporäre Dateien werden im Cache-Verzeichnis gespeichert
+- Unterstützt alle Share-Apps (WhatsApp, E-Mail, etc.)
+
+**4. FileProvider konfiguriert**
+
+**Neue Datei:** `app/src/main/res/xml/file_paths.xml`
+
+**Inhalt:**
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="qrcode_cache" path="qrcode/" />
+    <external-cache-path name="qrcode_external_cache" path="qrcode/" />
+</paths>
+```
+
+**Begründung:**
+- FileProvider erfordert explizite Pfad-Definitionen
+- Cache-Verzeichnisse sind für temporäre Dateien geeignet
+- Sicherheit: Nur definierte Pfade sind zugänglich
+
+**5. AndroidManifest erweitert**
+
+**Datei:** `app/src/main/AndroidManifest.xml`
+
+**Änderung:**
+```xml
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="${applicationId}.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>
+```
+
+**Begründung:**
+- FileProvider ist erforderlich für sichere Datei-Freigabe ab Android 7.0
+- `grantUriPermissions="true"` ermöglicht temporären Zugriff für Share-Apps
+- `exported="false"` verhindert direkten Zugriff von außen
+
+**6. MainActivity Callbacks erweitert**
+
+**Datei:** `app/src/main/kotlin/com/ble1st/qrcode/MainActivity.kt`
+
+**Änderung:**
+```kotlin
+MainScreen(
+    viewModel = viewModel,
+    onSaveClick = { 
+        saveFileLauncher.launch("QRCode_${getTimestamp()}.png")
+    },
+    onSaveToGalleryClick = {
+        viewModel.saveQRCodeToGallery()
+    },
+    onShareClick = {
+        shareQRCode(viewModel)
+    }
+)
+```
+
+**Begründung:**
+- Jeder Button hat einen eigenen Callback
+- Klare Trennung der Verantwortlichkeiten
+- Einfache Erweiterbarkeit
+
+### Ergebnis
+
+✅ Drei separate Speicher-/Teilen-Optionen verfügbar  
+✅ Speicherplatz wählen: Benutzer kann Speicherort selbst auswählen (SAF)  
+✅ In Galerie speichern: Direkte Speicherung in Galerie (MediaStore API)  
+✅ Teilen: QR-Code kann über alle Share-Apps geteilt werden  
+✅ FileProvider korrekt konfiguriert für sichere Datei-Freigabe  
+✅ Fehlerbehandlung für alle drei Optionen implementiert  
+✅ UI zeigt klare, separate Buttons für jede Option
+
+### Verifizierung
+
+Nach der Änderung sollten folgende Funktionen verfügbar sein:
+1. **Speicherplatz wählen:** Button öffnet SAF-Dialog, Benutzer wählt Speicherort
+2. **In Galerie speichern:** Button speichert direkt in Galerie, Datei ist in Galerie-App sichtbar
+3. **Teilen:** Button öffnet Share-Dialog mit allen verfügbaren Apps
+
+### Technische Details
+
+**Speicher-Optionen:**
+
+1. **Speicherplatz wählen (SAF):**
+   - Verwendet `ActivityResultContracts.CreateDocument`
+   - Keine Runtime-Permissions erforderlich
+   - Benutzer hat volle Kontrolle über Speicherort
+
+2. **In Galerie speichern:**
+   - Verwendet `MediaStore.Images.Media` API (Android 10+)
+   - Fallback auf File API für ältere Versionen
+   - Datei wird in `Pictures/QRCode` gespeichert
+   - Automatisch in Galerie-App sichtbar
+
+3. **Teilen:**
+   - Erstellt temporäre Datei im Cache-Verzeichnis
+   - Verwendet FileProvider für sichere URI-Freigabe
+   - Unterstützt alle Share-Apps (WhatsApp, E-Mail, etc.)
+   - Temporäre Dateien werden automatisch bereinigt
+
+### Lessons Learned
+
+1. **FileProvider:** Erforderlich für sichere Datei-Freigabe ab Android 7.0
+2. **Temporäre Dateien:** Cache-Verzeichnis ist ideal für temporäre Share-Dateien
+3. **UI-Klarheit:** Separate Buttons sind benutzerfreundlicher als ein einzelner Button mit Menü
+4. **MediaStore API:** Direkte Speicherung in Galerie ohne Benutzerinteraktion möglich
+5. **Share Intent:** `FLAG_GRANT_READ_URI_PERMISSION` ist erforderlich für FileProvider-URIs
+
+### Referenzen
+
+- [Android FileProvider Documentation](https://developer.android.com/reference/androidx/core/content/FileProvider)
+- [Android MediaStore API](https://developer.android.com/reference/android/provider/MediaStore)
+- [Android Share Intent](https://developer.android.com/training/sharing/send)
+
+---
+
+## Iteration 13: [Zukünftige Iterationen]
 
 *Hier werden zukünftige Iterationen dokumentiert...*
 
@@ -1122,6 +1371,7 @@ Nach der Änderung sollte der Build erfolgreich sein:
 | 2026-01-09 | Iteration 9 | Build-Fehlerbehebung - Kotlin/Hilt Kompatibilität & BuildConfig | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 10 | Build-Fehlerbehebung - Fehlende Data-Modul Dependency | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 11 | Build-Fehlerbehebung - BuildConfig zur Kompilierungszeit nicht verfügbar | ✅ Abgeschlossen |
+| 2026-01-09 | Iteration 12 | QR-Code Speicher- und Teilen-Funktionen erweitert | ✅ Abgeschlossen |
 
 ---
 
@@ -1140,4 +1390,4 @@ Nach der Änderung sollte der Build erfolgreich sein:
 
 ---
 
-**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 11 - BuildConfig durch ApplicationInfo ersetzt)
+**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 12 - QR-Code Speicher- und Teilen-Funktionen erweitert)
