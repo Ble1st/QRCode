@@ -11,6 +11,9 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: write  # Erforderlich für die Erstellung von Releases
+
 jobs:
   build:
     name: Build APK
