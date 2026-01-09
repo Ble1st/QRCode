@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -61,16 +60,13 @@ class MainActivity : ComponentActivity() {
     private fun MainScreenContent() {
         val viewModel: QRCodeViewModel = hiltViewModel()
         
-        // Set callback for URI handling - this will be called when URI is received
-        remember {
-            saveUriCallback = { uri ->
-                viewModel.saveQRCode(uri)
-            }
-        }
-        
         MainScreen(
             viewModel = viewModel,
-            onSaveClick = { 
+            onSaveClick = {
+                // Set callback for URI handling before launching file picker
+                saveUriCallback = { uri ->
+                    viewModel.saveQRCode(uri)
+                }
                 saveFileLauncher.launch("QRCode_${getTimestamp()}.png")
             },
             onSaveToGalleryClick = {

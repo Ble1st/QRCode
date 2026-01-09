@@ -1,6 +1,5 @@
 package com.ble1st.qrcode.core.designsystem.components
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme

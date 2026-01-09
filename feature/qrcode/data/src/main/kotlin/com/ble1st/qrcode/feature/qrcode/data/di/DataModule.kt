@@ -15,11 +15,11 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface DataModule {
+abstract class DataModule {
     
     @Binds
     @Singleton
-    fun bindQRCodeRepository(
+    abstract fun bindQRCodeRepository(
         qrCodeRepositoryImpl: QRCodeRepositoryImpl
     ): QRCodeRepository
 }

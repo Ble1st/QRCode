@@ -318,13 +318,13 @@ Nach der Änderung sollten keine Warnungen mehr erscheinen:
 Inconsistent JVM-target compatibility detected for tasks 'compileDebugJavaWithJavac' (1.8) and 'compileDebugKotlin' (21).
 ```
 
-2. **AndroidManifest Warnungen:**
+1. **AndroidManifest Warnungen:**
 ```
 package="com.ble1st.qrcode.core.designsystem" found in source AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported.
 ```
 
-3. **Material Components Theme Fehler:**
+1. **Material Components Theme Fehler:**
 ```
 error: resource style/Theme.MaterialComponents.DayNight.DarkActionBar not found.
 error: style attribute 'attr/colorPrimary' not found.
@@ -535,7 +535,7 @@ e: file:///home/gerd/Schreibtisch/QRCode/feature/qrcode/ui/src/main/kotlin/com/b
 Unresolved reference 'hiltViewModel'.
 ```
 
-2. **Unresolved reference 'Timber':**
+1. **Unresolved reference 'Timber':**
 ```
 e: file:///home/gerd/Schreibtisch/QRCode/feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/viewmodel/QRCodeViewModel.kt:10:12
 Unresolved reference 'jakewharton'.
@@ -544,7 +544,7 @@ e: file:///home/gerd/Schreibtisch/QRCode/feature/qrcode/ui/src/main/kotlin/com/b
 Unresolved reference 'Timber'.
 ```
 
-3. **Signing-Validierung Fehler:**
+1. **Signing-Validierung Fehler:**
 ```
 > Task :app:validateSigningDebug FAILED
 > Cannot create directory /root/.android
@@ -710,25 +710,25 @@ e: file:///home/gerd/Schreibtisch/QRCode/app/src/main/kotlin/com/ble1st/qrcode/M
 Unresolved reference 'MaterialTheme'.
 ```
 
-2. **Unresolved reference 'hiltViewModel':**
+1. **Unresolved reference 'hiltViewModel':**
 ```
 e: file:///home/gerd/Schreibtisch/QRCode/app/src/main/kotlin/com/ble1st/qrcode/MainActivity.kt:14:41
 Unresolved reference 'hiltViewModel'.
 ```
 
-3. **Unresolved reference 'Timber':**
+1. **Unresolved reference 'Timber':**
 ```
 e: file:///home/gerd/Schreibtisch/QRCode/app/src/main/kotlin/com/ble1st/qrcode/MainActivity.kt:18:19
 Unresolved reference 'Timber'.
 ```
 
-4. **Unresolved reference 'common':**
+1. **Unresolved reference 'common':**
 ```
 e: file:///home/gerd/Schreibtisch/QRCode/app/src/main/kotlin/com/ble1st/qrcode/MainActivity.kt:65:74
 Unresolved reference 'common'.
 ```
 
-5. **Unresolved reference 'BuildConfig':**
+1. **Unresolved reference 'BuildConfig':**
 ```
 e: file:///home/gerd/Schreibtisch/QRCode/app/src/main/kotlin/com/ble1st/qrcode/QRCodeApplication.kt:4:26
 Unresolved reference 'BuildConfig'.
@@ -1051,6 +1051,7 @@ Unresolved reference 'BuildConfig'.
 **Datei:** `app/src/main/kotlin/com/ble1st/qrcode/QRCodeApplication.kt`
 
 **Änderung:**
+
 ```kotlin
 // Vorher:
 if (BuildConfig.DEBUG) {
@@ -1062,9 +1063,7 @@ if (isDebugBuild()) {
     Timber.plant(Timber.DebugTree())
 }
 
-private fun isDebugBuild(): Boolean {
-    return (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-}
+
 ```
 
 **Begründung:**
@@ -1135,34 +1134,11 @@ Erweiterung der QR-Code-Speicherfunktionen um drei Optionen: Speicherplatz selbs
 - `getQRCodeBitmap()`: Gibt das aktuelle QR-Code-Bitmap zurück (für Share-Funktion)
 
 **Implementierung:**
-```kotlin
-fun saveQRCodeToGallery() {
-    val bitmap = _uiState.value.qrCodeBitmap
-    if (bitmap == null) {
-        _uiState.update { it.copy(errorMessage = "Kein QR-Code zum Speichern vorhanden") }
-        return
-    }
-    
-    viewModelScope.launch {
-        try {
-            val result = saveQRCodeUseCase(bitmap, null, null)
-            when (result) {
-                is StorageResult.Success -> {
-                    _uiState.update { it.copy(errorMessage = null) }
-                }
-                is StorageResult.Error -> {
-                    _uiState.update { it.copy(errorMessage = "Speichern in Galerie fehlgeschlagen: ${result.message}") }
-                }
-            }
-        } catch (e: Exception) {
-            _uiState.update { it.copy(errorMessage = "Fehler beim Speichern in Galerie: ${e.message}") }
-        }
-    }
-}
 
-fun getQRCodeBitmap(): Bitmap? {
-    return _uiState.value.qrCodeBitmap
-}
+```kotlin
+
+
+
 ```
 
 **Begründung:**
@@ -1178,52 +1154,9 @@ fun getQRCodeBitmap(): Bitmap? {
 - `shareQRCode()`: Erstellt temporäre Datei und öffnet Share-Dialog
 
 **Implementierung:**
+
 ```kotlin
-private fun shareQRCode(viewModel: QRCodeViewModel) {
-    val bitmap = viewModel.getQRCodeBitmap()
-    if (bitmap == null) return
-    
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            // Create temporary file in cache directory
-            val cacheDir = File(cacheDir, "qrcode")
-            if (!cacheDir.exists()) {
-                cacheDir.mkdirs()
-            }
-            
-            val fileName = "QRCode_${getTimestamp()}.png"
-            val file = File(cacheDir, fileName)
-            
-            // Save bitmap to file
-            FileOutputStream(file).use { outputStream ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-                outputStream.flush()
-            }
-            
-            // Get URI using FileProvider
-            val uri = FileProvider.getUriForFile(
-                this@MainActivity,
-                "${packageName}.fileprovider",
-                file
-            )
-            
-            // Create share intent
-            val shareIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_STREAM, uri)
-                type = "image/png"
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            
-            // Launch share dialog
-            val chooserIntent = Intent.createChooser(shareIntent, "QR-Code teilen")
-            chooserIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            startActivity(chooserIntent)
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to share QR code")
-        }
-    }
-}
+
 ```
 
 **Begründung:**
@@ -1236,10 +1169,11 @@ private fun shareQRCode(viewModel: QRCodeViewModel) {
 **Neue Datei:** `app/src/main/res/xml/file_paths.xml`
 
 **Inhalt:**
+
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <cache-path name="qrcode_cache" path="qrcode/" />
+<paths>
+<cache-path name="qrcode_cache" path="qrcode/" />
     <external-cache-path name="qrcode_external_cache" path="qrcode/" />
 </paths>
 ```
@@ -1414,13 +1348,9 @@ implementation(libs.androidx.compose.material.icons.extended)
 **Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/state/QRCodeUiState.kt`
 
 **Änderung:**
+
 ```kotlin
-data class QRCodeUiState(
-    val qrCodeBitmap: Bitmap? = null,
-    val isGenerating: Boolean = false,
-    val errorMessage: String? = null,
-    val successMessage: String? = null  // Neu hinzugefügt
-)
+
 ```
 
 **Begründung:**

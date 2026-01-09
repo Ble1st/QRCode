@@ -1,4 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="EntryPointsManager">
+    <pattern value="com.ble1st.qr_code.ExampleUnitTest" method="addition_isCorrect" />
+    <pattern value="com.ble1st.qrcode.feature.qrcode.data.di.DataSourceModule" />
+    <pattern value="com.ble1st.qrcode.core.common.util.Result.Error" />
+    <pattern value="com.ble1st.qrcode.core.common.util.Result.Error" method="Error" />
+    <pattern value="com.ble1st.qr_code.ExampleInstrumentedTest" />
+    <pattern value="com.ble1st.qr_code.ExampleUnitTest" />
+    <pattern value="com.ble1st.qrcode.MainActivity" />
+    <pattern value="com.ble1st.qrcode.feature.qrcode.data.di.DataSourceModule" method="provideFileStorageManager" />
+    <pattern value="com.ble1st.qrcode.feature.qrcode.data.di.DataSourceModule" method="provideQRCodeGenerator" />
+    <pattern value="com.ble1st.qrcode.QRCodeApplication" />
+    <pattern value="com.ble1st.qrcode.feature.qrcode.data.repository.QRCodeRepositoryImpl" />
+    <pattern value="com.ble1st.qrcode.feature.qrcode.data.repository.QRCodeRepositoryImpl" method="QRCodeRepositoryImpl" />
+    <pattern value="com.ble1st.qrcode.feature.qrcode.ui.viewmodel.QRCodeViewModel" />
+    <pattern value="com.ble1st.qrcode.feature.qrcode.ui.viewmodel.QRCodeViewModel" method="QRCodeViewModel" />
+    <pattern value="com.ble1st.qrcode.core.common.util.Result" />
+    <pattern value="com.ble1st.qrcode.core.common.util.Result.Success" />
+    <pattern value="com.ble1st.qrcode.core.common.util.Result.Success" method="Success" />
+    <pattern value="com.ble1st.qr_code.ExampleInstrumentedTest" method="useAppContext" />
+  </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="jbr-21" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />

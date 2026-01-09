@@ -193,12 +193,12 @@ testImplementation("app.cash.turbine:turbine:1.2.0")
 4. ✅ **StateFlow** - State Management
 
 ### Should-Have (P1):
-5. ✅ **Timber** - Strukturiertes Logging
-6. ✅ **Material 3** - Modernes Design
+1. ✅ **Timber** - Strukturiertes Logging
+2. ✅ **Material 3** - Modernes Design
 
 ### Nice-to-Have (P2):
-7. ✅ **Coil** - Bildladung (optional, da Bitmap direkt verwendet werden kann)
-8. ✅ **Turbine** - Flow-Testing
+1. ✅ **Coil** - Bildladung (optional, da Bitmap direkt verwendet werden kann)
+2. ✅ **Turbine** - Flow-Testing
 
 ### Nicht relevant für MVP:
 - ❌ Navigation Compose (nur ein Screen)

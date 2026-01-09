@@ -58,12 +58,7 @@ class QRCodeViewModel @Inject constructor(
             }
         }
     }
-    
-    fun clearQRCode() {
-        _uiState.update { it.copy(qrCodeBitmap = null, errorMessage = null, successMessage = null) }
-        Timber.d("QR code cleared")
-    }
-    
+
     fun clearSuccessMessage() {
         _uiState.update { it.copy(successMessage = null) }
     }
