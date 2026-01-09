@@ -1754,7 +1754,310 @@ Nach der Änderung sollte:
 
 ---
 
-## Iteration 15: [Zukünftige Iterationen]
+## Iteration 15: QR-Code-Logo hinzugefügt
+
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Hinzufügen eines QR-Code-Logos neben dem Titel für bessere visuelle Identifikation und professionelleres Erscheinungsbild.
+
+### Durchgeführte Änderungen
+
+**QR-Code-Icon neben Titel hinzugefügt**
+
+**Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/screen/MainScreen.kt`
+
+**Änderung:**
+
+**Import hinzugefügt:**
+```kotlin
+import androidx.compose.material.icons.filled.QrCode
+```
+
+**UI-Struktur geändert:**
+```kotlin
+// Vorher:
+Text(
+    text = "QR-Code Generator",
+    style = MaterialTheme.typography.headlineLarge,
+    color = MaterialTheme.colorScheme.primary,
+    modifier = Modifier.padding(vertical = 8.dp)
+)
+
+// Nachher:
+Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.Center,
+    verticalAlignment = Alignment.CenterVertically
+) {
+    Icon(
+        imageVector = Icons.Default.QrCode,
+        contentDescription = "QR Code Logo",
+        modifier = Modifier.size(32.dp),
+        tint = MaterialTheme.colorScheme.primary
+    )
+    Spacer(modifier = Modifier.width(12.dp))
+    Text(
+        text = "QR-Code Generator",
+        style = MaterialTheme.typography.headlineLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+}
+```
+
+**Begründung:**
+- Visuelle Identifikation: QR-Code-Icon macht den Zweck der App sofort klar
+- Professionelles Design: Logo + Text ist Standard für moderne Apps
+- Konsistente Farbgebung: Icon verwendet Primary-Farbe wie der Text
+- Zentrierte Ausrichtung: Row mit `Arrangement.Center` für symmetrisches Layout
+- Accessibility: Content Description für Screen Reader
+
+**Design-Details:**
+- Icon-Größe: 32dp für gute Sichtbarkeit
+- Abstand zwischen Icon und Text: 12dp
+- Icon-Farbe: Primary-Farbe (konsistent mit Text)
+- Vertikale Ausrichtung: `Alignment.CenterVertically` für perfekte Zentrierung
+
+### Ergebnis
+
+✅ QR-Code-Icon neben Titel hinzugefügt  
+✅ Zentrierte Ausrichtung von Icon und Text  
+✅ Konsistente Farbgebung (Primary-Farbe)  
+✅ Professionelleres Erscheinungsbild  
+✅ Bessere visuelle Identifikation der App  
+✅ Accessibility durch Content Description  
+✅ Keine Linter-Fehler
+
+### Verifizierung
+
+Nach der Änderung sollte:
+- ✅ QR-Code-Icon links neben dem Titel sichtbar sein
+- ✅ Icon und Text horizontal zentriert sein
+- ✅ Icon die Primary-Farbe verwenden
+- ✅ Abstand zwischen Icon und Text angemessen sein
+- ✅ Layout auf allen Bildschirmgrößen funktionieren
+
+### Lessons Learned
+
+1. **Visuelle Identifikation:** Icons verbessern die Erkennbarkeit deutlich
+2. **Row-Layout:** Für horizontale Anordnung von Icon und Text
+3. **Zentrierung:** `Arrangement.Center` für symmetrische Ausrichtung
+4. **Icon-Größe:** 32dp ist eine gute Standard-Größe für Titel-Icons
+5. **Material Icons:** `Icons.Default.QrCode` ist bereits in Material Icons Extended enthalten
+
+### Referenzen
+
+- [Material Icons - QrCode](https://fonts.google.com/icons?icon.query=qr+code)
+- [Compose Row Layout](https://developer.android.com/jetpack/compose/layouts/basics#row)
+
+---
+
+## Iteration 16: QR-Code-Launcher-Icon erstellt
+
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Erstellung eines authentischen QR-Code-Launcher-Icons für den App-Drawer mit korrekter QR-Code-Struktur (Position Detection Patterns, Timing Patterns, Alignment Pattern, Data-Module).
+
+### Problem
+
+**Aktueller Zustand:**
+- Launcher-Icon zeigte Standard-Android-Roboter-Icon
+- Keine visuelle Identifikation als QR-Code-App im App-Drawer
+- Inkonsistent mit dem Logo im UI
+
+**Auswirkung:**
+- App war im App-Drawer nicht sofort als QR-Code-App erkennbar
+- Professionelles Erscheinungsbild fehlte
+
+### Lösung
+
+**1. Authentisches QR-Code-Vector-Drawable erstellt**
+
+**Datei:** `app/src/main/res/drawable/ic_launcher_foreground.xml`
+
+**Implementierung mit korrekter QR-Code-Struktur:**
+
+**a) Weißer Hintergrund:**
+- Vollständig weißer Hintergrund (108x108dp) für den QR-Code
+- Erzeugt klassisches QR-Code-Aussehen (schwarz auf weiß)
+- Hebt sich gut vom farbigen Icon-Hintergrund ab
+
+**b) Position Detection Patterns (3 Ecken):**
+- Äußerer schwarzer Rahmen (9x9dp)
+- Weißer Mittelteil (12x12dp)
+- Schwarzes Inneres (15x15dp)
+- Weißes Zentrum (9x9dp)
+- Positionen: Top-Left, Top-Right, Bottom-Left
+- Korrekte 7x7-Modul-Struktur wie bei echten QR-Codes
+
+**c) Timing Patterns:**
+- Horizontale Linie zwischen oberen Position Detection Patterns
+- Vertikale Linie zwischen linken Position Detection Patterns
+- Charakteristische abwechselnde schwarze Module
+
+**d) Alignment Pattern:**
+- Zentriertes Alignment Pattern (9x9dp äußerer Rahmen, 3x3dp weißes Zentrum)
+- Für größere QR-Codes typisch
+
+**e) Data-Module:**
+- Schwarze 3x3dp Quadrate verteilt über den gesamten Bereich
+- Authentisches QR-Code-Muster
+- Strategisch platziert für gute Erkennbarkeit
+- Realistische Verteilung für authentisches Aussehen
+
+**Design-Details:**
+- **Weißer Hintergrund:** Vollständig weißer Hintergrund für klassisches QR-Code-Aussehen
+- **Position Detection Patterns:** Korrekte 7x7-Modul-Struktur (äußerer Rahmen, weißer Ring, schwarzes Inneres, weißes Zentrum)
+- **Timing Patterns:** Charakteristische Linien zwischen Position Detection Patterns
+- **Alignment Pattern:** Zentriert für größere QR-Codes
+- **Data-Module:** Realistisches Muster verteilt über den gesamten Bereich
+- **Kontrast:** Klare Schwarz-Weiß-Kontraste für optimale Erkennbarkeit
+- **Viewport:** 108x108dp für Adaptive Icon
+
+**2. Hintergrund vereinfacht**
+
+**Datei:** `app/src/main/res/drawable/ic_launcher_background.xml`
+
+**Änderung:**
+```xml
+<!-- Vorher: Komplexes Gitter-Muster mit grünem Hintergrund -->
+<!-- Nachher: Einfacher Primary-Farb-Hintergrund -->
+<path
+    android:fillColor="#6200EE"
+    android:pathData="M0,0h108v108h-108z" />
+```
+
+**Begründung:**
+- Einfacher Hintergrund lenkt nicht vom QR-Code ab
+- Primary-Farbe (#6200EE) für konsistentes Branding
+- Weißer QR-Code hebt sich gut vom farbigen Hintergrund ab
+
+**3. Adaptive Icon Konfiguration**
+
+**Datei:** `app/src/main/res/mipmap-anydpi/ic_launcher.xml`
+
+**Bereits konfiguriert:**
+```xml
+<adaptive-icon>
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>
+```
+
+**Begründung:**
+- Adaptive Icon unterstützt verschiedene Icon-Formen (rund, quadratisch, etc.)
+- Monochrome-Version für Android 13+ Theming
+- Automatische Generierung für alle Dichten durch Android Studio
+
+### Ergebnis
+
+✅ Authentisches QR-Code-Launcher-Icon erstellt  
+✅ Korrekte Position Detection Patterns (7x7-Modul-Struktur)  
+✅ Timing Patterns zwischen Position Detection Patterns  
+✅ Alignment Pattern im Zentrum  
+✅ Realistische Data-Module-Verteilung  
+✅ Primary-Farb-Hintergrund für konsistentes Branding  
+✅ Adaptive Icon konfiguriert  
+✅ Monochrome-Version für Android 13+  
+✅ App ist im App-Drawer als QR-Code-App erkennbar
+
+### Verifizierung
+
+Nach der Änderung sollte:
+- ✅ QR-Code-Icon im App-Drawer sichtbar sein
+- ✅ Icon wie ein echter QR-Code aussehen
+- ✅ Position Detection Patterns in den Ecken erkennbar sein
+- ✅ Timing Patterns zwischen den Ecken sichtbar sein
+- ✅ Icon auf verschiedenen Android-Versionen korrekt angezeigt werden
+- ✅ Icon in verschiedenen Formen (rund, quadratisch) funktionieren
+- ✅ Icon auf verschiedenen Bildschirmgrößen scharf sein
+
+### Technische Details
+
+**QR-Code-Struktur:**
+- **Position Detection Patterns:** 7x7-Modul-Struktur in 3 Ecken
+  - Äußerer Rahmen: 9x9dp schwarz
+  - Weißer Ring: 12x12dp weiß
+  - Schwarzes Inneres: 15x15dp schwarz
+  - Weißes Zentrum: 9x9dp weiß
+  
+- **Timing Patterns:** 
+  - Horizontale Linie zwischen oberen Ecken
+  - Vertikale Linie zwischen linken Ecken
+  - Abwechselnde schwarze Module
+  
+- **Alignment Pattern:**
+  - Zentriert: 9x9dp äußerer Rahmen, 3x3dp weißes Zentrum
+  
+- **Data-Module:**
+  - 3x3dp schwarze Quadrate
+  - Strategisch verteilt für authentisches Aussehen
+
+**Icon-Struktur:**
+- **Foreground:** Authentisches QR-Code-Muster
+- **Background:** Primary-Farbe (#6200EE)
+- **Viewport:** 108x108dp (Standard für Adaptive Icons)
+- **Format:** Vector Drawable (skalierbar für alle Dichten)
+
+### Lessons Learned
+
+1. **QR-Code-Struktur:** Position Detection Patterns müssen korrekt strukturiert sein (7x7-Module)
+2. **Timing Patterns:** Wichtig für authentisches QR-Code-Aussehen
+3. **Alignment Pattern:** Zentriertes Pattern für größere QR-Codes
+4. **Vector Drawables:** Skalierbare Icons für alle Bildschirmdichten
+5. **Adaptive Icons:** Unterstützen verschiedene Icon-Formen automatisch
+6. **Kontrast:** Schwarz-Weiß-Kontrast wichtig für kleine Icon-Größen
+7. **Branding:** Hintergrund-Farbe sollte mit App-Theme konsistent sein
+
+### Referenzen
+
+- [Adaptive Icons Documentation](https://developer.android.com/guide/practices/ui_guidelines/icon_design_adaptive)
+- [Vector Drawable Documentation](https://developer.android.com/develop/ui/views/graphics/vector-drawable-resources)
+- [QR Code Structure](https://en.wikipedia.org/wiki/QR_code#Structure)
+
+---
+
+## Iteration 17: Benutzerdefiniertes Launcher-Icon (PNG) eingebunden
+
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Ersetzung des generierten Vector-Launcher-Icons durch ein vom Benutzer bereitgestelltes PNG-Bild für ein spezifisches, weichgezeichnetes "Dots"-Design.
+
+### Durchgeführte Änderungen
+
+**1. Bild aus Downloads-Ordner kopiert**
+- **Quelle:** `/home/gerd/Downloads/qr-code-scan.png`
+- **Ziel:** `app/src/main/res/drawable/ic_launcher_foreground_image.png`
+- **Warum:** Der Benutzer wünschte ein spezifisches Design ("Dots"-Stil), das in einer vorhandenen Bilddatei vorlag.
+
+**2. Adaptive Icon Konfiguration aktualisiert**
+- **Dateien:** 
+  - `app/src/main/res/mipmap-anydpi/ic_launcher.xml`
+  - `app/src/main/res/mipmap-anydpi/ic_launcher_round.xml`
+- **Änderung:** Verweis von `@drawable/ic_launcher_foreground` (Vector) auf `@drawable/ic_launcher_foreground_image` (PNG) geändert.
+- **Warum:** Um das statische Bild als Vordergrund für das adaptive Icon zu verwenden.
+
+### Ergebnis
+✅ Das vom Benutzer gewählte Bild wird nun als Launcher-Icon im App-Drawer verwendet.  
+✅ Die App behält ihre adaptive Icon-Struktur bei (Hintergrund bleibt die Markenfarbe).  
+✅ Das spezifische "Dots"-Design wird korrekt dargestellt.
+
+### Lessons Learned
+1. **Benutzer-Präferenzen:** Direkte Verwendung von bereitgestellten Assets, wenn diese dem gewünschten Stil entsprechen.
+2. **Adaptive Icons:** Unterstützung sowohl für Vector Drawables als auch für Rastergrafiken (PNG/WebP) als Vordergrund.
+3. **Sandbox-Zugriff:** Dateien außerhalb des Workspace können mit entsprechenden Pfaden gelesen/kopiert werden, wenn die Berechtigungen vorliegen.
+
+---
+
+## Iteration 18: [Zukünftige Iterationen]
+
 
 *Hier werden zukünftige Iterationen dokumentiert...*
 
@@ -1778,6 +2081,8 @@ Nach der Änderung sollte:
 | 2026-01-09 | Iteration 12 | QR-Code Speicher- und Teilen-Funktionen erweitert | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 13 | UI-Refactoring - Moderne UX-Verbesserungen | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 14 | UI-Verbesserungen - Titel und zentrierte Eingabe | ✅ Abgeschlossen |
+| 2026-01-09 | Iteration 15 | QR-Code-Logo hinzugefügt | ✅ Abgeschlossen |
+| 2026-01-09 | Iteration 17 | Benutzerdefiniertes Launcher-Icon (PNG) eingebunden | ✅ Abgeschlossen |
 
 ---
 
@@ -1796,4 +2101,4 @@ Nach der Änderung sollte:
 
 ---
 
-**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 14 - Titel und zentrierte Eingabe hinzugefügt)
+**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 16 - QR-Code-Launcher-Icon erstellt)

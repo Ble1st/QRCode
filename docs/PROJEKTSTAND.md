@@ -1,8 +1,8 @@
 # Projektstand: QR-Code Generator
 
 **Stand:** 9. Januar 2026  
-**Version:** 1.0.2  
-**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert, UI-Refactoring abgeschlossen
+**Version:** 1.0.3  
+**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert, UI-Refactoring abgeschlossen, Authentisches Launcher-Icon eingebunden
 
 ## Übersicht
 
@@ -480,6 +480,13 @@ Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Archit
 - **Problem:** Hilt 2.57.2 unterstützt Kotlin 2.3.0 nicht (Metadata-Version 2.3.0 > max. 2.2.0)
 - **Lösung:** Kotlin auf 2.2.20 downgradet, KSP auf 2.2.20-2.0.4 angepasst
 - **Status:** ✅ Kotlin-Version angepasst, kompatibel mit Hilt
+
+### Iteration 17: Benutzerdefiniertes Launcher-Icon (PNG) eingebunden (9. Januar 2026)
+- **Problem:** Benutzer wünschte ein spezifisches "Dots"-QR-Code-Design für das Launcher-Icon.
+- **Lösung:** 
+  - PNG-Bild aus Downloads-Ordner nach `app/src/main/res/drawable/ic_launcher_foreground_image.png` kopiert.
+  - Adaptive Icon Konfiguration (`ic_launcher.xml`, `ic_launcher_round.xml`) aktualisiert, um das PNG-Bild als Vordergrund zu verwenden.
+- **Status:** ✅ Das gewünschte "Dots"-Logo wird nun im App-Drawer angezeigt.
 
 **Details:** Siehe `docs/ITERATIONEN.md` für vollständige Dokumentation aller Iterationen.
 
