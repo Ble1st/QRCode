@@ -1,0 +1,1 @@
+-keep,allowobfuscation,allowshrinking class com.ble1st.qrcode.feature.qrcode.ui.viewmodel.QRCodeViewModel
