@@ -1,8 +1,8 @@
 # Projektstand: QR-Code Generator
 
 **Stand:** 9. Januar 2026  
-**Version:** 1.0.3  
-**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert, UI-Refactoring abgeschlossen, Authentisches Launcher-Icon eingebunden
+**Version:** 1.0.5  
+**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert, UI-Refactoring abgeschlossen, Authentisches Launcher-Icon eingebunden, Hilt-Bindings korrigiert, Scoped Storage korrekt implementiert
 
 ## Übersicht
 
@@ -462,7 +462,9 @@ Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Archit
 **Status:** ✅ Modulare Architektur vollständig implementiert  
 **Build-Status:** ✅ Alle Build-Fehler behoben, Build erfolgreich  
 **Features:** ✅ Speicher- und Teilen-Funktionen erweitert (Iteration 12)  
-**UI:** ✅ Modernes UI-Refactoring abgeschlossen (Iteration 13)
+**UI:** ✅ Modernes UI-Refactoring abgeschlossen (Iteration 13)  
+**Hilt:** ✅ Alle Dependency-Injection-Bindings korrekt konfiguriert (Iteration 18)  
+**Storage:** ✅ Scoped Storage korrekt implementiert, keine veralteten Permissions (Iteration 19)
 
 ## Aktuelle Build-Probleme & Lösungen
 
@@ -487,6 +489,24 @@ Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Archit
   - PNG-Bild aus Downloads-Ordner nach `app/src/main/res/drawable/ic_launcher_foreground_image.png` kopiert.
   - Adaptive Icon Konfiguration (`ic_launcher.xml`, `ic_launcher_round.xml`) aktualisiert, um das PNG-Bild als Vordergrund zu verwenden.
 - **Status:** ✅ Das gewünschte "Dots"-Logo wird nun im App-Drawer angezeigt.
+
+### Iteration 18: Hilt DataModule Binding-Fehler behoben (9. Januar 2026)
+- **Problem:** Hilt konnte `QRCodeRepository` nicht bereitstellen - `[Dagger/MissingBinding]` Fehler.
+- **Ursache:** Das `QRCodeRepository` Interface war nicht mit der `QRCodeRepositoryImpl` Implementierung verbunden. Es fehlte ein `@Binds` Modul.
+- **Lösung:** 
+  - Neues `DataModule` als abstrakte Klasse hinzugefügt mit `@Binds` Methode für Repository-Binding.
+  - `DataSourceModule` bleibt als separates `object` für Data-Source-Provider.
+  - Beide Module installiert in `SingletonComponent`.
+- **Status:** ✅ Hilt kann jetzt alle Dependencies korrekt auflösen, Build erfolgreich.
+
+### Iteration 19: Scoped Storage - Veraltete Storage-Permissions entfernt (9. Januar 2026)
+- **Problem:** Warnung im AndroidManifest: `WRITE_EXTERNAL_STORAGE no longer provides write access when targeting Android 10+`.
+- **Ursache:** Die App hatte veraltete Storage-Permissions, die bei Android 10+ aufgrund von Scoped Storage nicht mehr wirksam sind.
+- **Lösung:** 
+  - `WRITE_EXTERNAL_STORAGE` und `READ_EXTERNAL_STORAGE` Permissions aus AndroidManifest entfernt.
+  - Code in `FileStorageManager` vereinfacht (keine Version-Checks mehr nötig, da `minSdk` 34 ist).
+  - App verwendet ausschließlich Scoped Storage (MediaStore API und SAF) - keine Permissions erforderlich.
+- **Status:** ✅ Keine Warnungen mehr, Code vereinfacht, bessere Benutzerfreundlichkeit.
 
 **Details:** Siehe `docs/ITERATIONEN.md` für vollständige Dokumentation aller Iterationen.
 

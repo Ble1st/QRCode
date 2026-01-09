@@ -1986,8 +1986,285 @@ Ersetzung des generierten Vector-Launcher-Icons durch ein vom Benutzer bereitges
 
 ---
 
-## Iteration 18: [Zukünftige Iterationen]
+## Iteration 18: Hilt DataModule Binding-Fehler behoben
 
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Behebung eines Hilt-Binding-Fehlers, bei dem `QRCodeRepository` nicht bereitgestellt werden konnte, da das Interface nicht mit der Implementierung verbunden war.
+
+### Problem
+
+**Fehlermeldung:**
+```
+[Dagger/MissingBinding] com.ble1st.qrcode.feature.qrcode.domain.repository.QRCodeRepository 
+cannot be provided without an @Provides-annotated method.
+```
+
+**Ursache:**
+- Das `QRCodeRepository` Interface wurde nicht mit der `QRCodeRepositoryImpl` Implementierung verbunden
+- Es gab nur ein `DataSourceModule` für Data Sources (`QRCodeGenerator`, `FileStorageManager`)
+- Hilt konnte das Repository-Interface nicht auflösen, da kein `@Binds` Modul vorhanden war
+
+**Auswirkung:**
+- Build schlug fehl bei der Hilt-Kompilierung
+- `GenerateQRCodeUseCase` und `SaveQRCodeUseCase` konnten nicht injiziert werden
+- App konnte nicht gebaut werden
+
+### Lösung
+
+**1. DataModule mit @Binds hinzugefügt**
+
+**Datei:** `feature/qrcode/data/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/data/di/DataModule.kt`
+
+**Änderung:**
+```kotlin
+// Vorher:
+@Module
+@InstallIn(SingletonComponent::class)
+object DataSourceModule {
+    // Nur Data Sources, kein Repository Binding
+}
+
+// Nachher:
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class DataModule {
+    
+    @Binds
+    @Singleton
+    abstract fun bindQRCodeRepository(
+        qrCodeRepositoryImpl: QRCodeRepositoryImpl
+    ): QRCodeRepository
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DataSourceModule {
+    // Data Sources bleiben unverändert
+}
+```
+
+**Begründung:**
+- `@Binds` wird verwendet, um ein Interface mit einer Implementierung zu verbinden
+- `DataModule` ist eine abstrakte Klasse (erforderlich für `@Binds`)
+- `DataSourceModule` bleibt als separates `object` für `@Provides` Methoden
+- Beide Module sind mit `@InstallIn(SingletonComponent::class)` installiert
+
+**2. Imports hinzugefügt**
+
+**Neue Imports:**
+```kotlin
+import com.ble1st.qrcode.feature.qrcode.data.repository.QRCodeRepositoryImpl
+import com.ble1st.qrcode.feature.qrcode.domain.repository.QRCodeRepository
+import dagger.Binds
+```
+
+**Begründung:**
+- `@Binds` Annotation von Dagger
+- Repository-Interface und Implementierung für Binding
+
+### Ergebnis
+
+✅ `QRCodeRepository` kann jetzt korrekt über `QRCodeRepositoryImpl` bereitgestellt werden  
+✅ Hilt kann alle Dependencies für Use Cases auflösen  
+✅ `GenerateQRCodeUseCase` und `SaveQRCodeUseCase` können injiziert werden  
+✅ Build sollte erfolgreich sein  
+✅ Alle Hilt-Bindings sind korrekt konfiguriert
+
+### Verifizierung
+
+Nach der Änderung sollte der Build erfolgreich sein:
+```bash
+./gradlew assembleDebug
+```
+
+Hilt sollte jetzt:
+- `QRCodeRepository` über `QRCodeRepositoryImpl` bereitstellen können
+- `QRCodeGenerator` und `FileStorageManager` bereitstellen können
+- Alle Dependencies für Use Cases auflösen können
+
+### Technische Details
+
+**Hilt Module-Struktur:**
+
+1. **DataModule (abstrakt):**
+   - Bindet `QRCodeRepository` Interface → `QRCodeRepositoryImpl` Implementierung
+   - Verwendet `@Binds` für Interface-Bindings
+   - Installiert in `SingletonComponent`
+
+2. **DataSourceModule (object):**
+   - Stellt `QRCodeGenerator` bereit (über `@Provides`)
+   - Stellt `FileStorageManager` bereit (über `@Provides` mit `@ApplicationContext`)
+   - Installiert in `SingletonComponent`
+
+**Dependency-Graph:**
+```
+QRCodeViewModel
+  └── GenerateQRCodeUseCase
+      └── QRCodeRepository (Interface)
+          └── QRCodeRepositoryImpl (Implementation)
+              ├── QRCodeGenerator
+              └── FileStorageManager
+```
+
+### Lessons Learned
+
+1. **@Binds vs @Provides:** `@Binds` wird für Interface-zu-Implementierung-Bindings verwendet, `@Provides` für konkrete Instanzen
+2. **Abstrakte Module:** `@Binds` Methoden müssen in abstrakten Klassen oder Interfaces sein, nicht in `object`
+3. **Module-Trennung:** Data Sources und Repository-Bindings können in separaten Modulen sein
+4. **Hilt Discovery:** Hilt findet Module automatisch, wenn sie im Classpath sind und korrekt annotiert sind
+5. **SingletonComponent:** Repository-Bindings sollten in `SingletonComponent` installiert sein für App-weite Verfügbarkeit
+
+### Referenzen
+
+- [Hilt @Binds Documentation](https://dagger.dev/hilt/modules.html#binds)
+- [Hilt Module Installation](https://dagger.dev/hilt/modules.html#install-in)
+- [Dagger @Binds vs @Provides](https://dagger.dev/dev-guide/binds.html)
+
+---
+
+## Iteration 19: Scoped Storage - Veraltete Storage-Permissions entfernt
+
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Entfernung der veralteten `WRITE_EXTERNAL_STORAGE` und `READ_EXTERNAL_STORAGE` Permissions aus dem AndroidManifest, da die App Scoped Storage verwendet und diese Permissions bei Android 10+ nicht mehr wirksam sind.
+
+### Problem
+
+**Warnung:**
+```
+WRITE_EXTERNAL_STORAGE no longer provides write access when targeting Android 10+
+Affected by scoped storage
+```
+
+**Ursache:**
+- Die App hatte `WRITE_EXTERNAL_STORAGE` und `READ_EXTERNAL_STORAGE` Permissions im AndroidManifest
+- Diese Permissions sind bei Android 10+ (API 29+) aufgrund von Scoped Storage nicht mehr wirksam
+- Die App verwendet bereits Scoped Storage (MediaStore API) und Storage Access Framework (SAF)
+- `minSdk` ist 34 (Android 14), daher sind diese Permissions überhaupt nicht mehr relevant
+
+**Auswirkung:**
+- Warnung im AndroidManifest
+- Unnötige Permissions, die nicht mehr benötigt werden
+- Potenzielle Verwirrung für Benutzer bei der Installation
+
+### Lösung
+
+**1. Permissions aus AndroidManifest entfernt**
+
+**Datei:** `app/src/main/AndroidManifest.xml`
+
+**Änderung:**
+```xml
+<!-- Vorher: -->
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+    android:maxSdkVersion="32" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+    android:maxSdkVersion="32" />
+
+<!-- Nachher: -->
+<!-- No storage permissions needed: App uses Scoped Storage (MediaStore API) and Storage Access Framework (SAF) -->
+<!-- minSdk is 34 (Android 14), which fully supports Scoped Storage -->
+```
+
+**Begründung:**
+- Die App verwendet bereits Scoped Storage korrekt
+- MediaStore API benötigt keine Runtime-Permissions für Android 10+
+- Storage Access Framework (SAF) benötigt keine Permissions
+- `minSdk` ist 34, daher sind Fallbacks für ältere Versionen nicht nötig
+
+**2. FileStorageManager Code vereinfacht**
+
+**Datei:** `feature/qrcode/data/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/data/datasource/FileStorageManager.kt`
+
+**Änderung:**
+```kotlin
+// Vorher:
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    // Use MediaStore API for Android 10+
+    // ...
+} else {
+    // Use File API for older Android versions
+    // ...
+}
+
+// Nachher:
+// Use MediaStore API (Scoped Storage) - no permissions needed for Android 10+
+// minSdk is 34, so we always use MediaStore API
+val contentValues = android.content.ContentValues().apply {
+    // ...
+}
+```
+
+**Begründung:**
+- `minSdk` ist 34, daher ist der Fallback für Android < 10 nicht mehr nötig
+- Code ist einfacher und wartbarer ohne Version-Checks
+- Entfernung von nicht mehr benötigten Imports (`Build`, `File`, `FileOutputStream`)
+
+### Ergebnis
+
+✅ Veraltete Storage-Permissions entfernt  
+✅ Keine Warnungen mehr im AndroidManifest  
+✅ Code vereinfacht (keine Version-Checks mehr nötig)  
+✅ App verwendet ausschließlich Scoped Storage (MediaStore API und SAF)  
+✅ Keine unnötigen Permissions bei der Installation  
+✅ Bessere Benutzerfreundlichkeit (weniger Permissions = mehr Vertrauen)
+
+### Verifizierung
+
+Nach der Änderung sollte:
+- ✅ Keine Warnungen im AndroidManifest mehr erscheinen
+- ✅ Die App weiterhin korrekt Dateien speichern können (über MediaStore API)
+- ✅ Die App weiterhin SAF für benutzerdefinierte Speicherorte verwenden können
+- ✅ Keine Runtime-Permissions für Storage mehr angefragt werden
+
+### Technische Details
+
+**Scoped Storage (Android 10+):**
+
+1. **MediaStore API:**
+   - Keine Runtime-Permissions erforderlich
+   - Speicherung in `Pictures/QRCode` über `RELATIVE_PATH`
+   - Dateien sind automatisch in der Galerie-App sichtbar
+   - Verwendet in `saveQRCodeToFile()`
+
+2. **Storage Access Framework (SAF):**
+   - Keine Permissions erforderlich
+   - Benutzer wählt Speicherort selbst aus
+   - Verwendet in `saveQRCodeViaSAF()`
+
+3. **FileProvider:**
+   - Für sichere Datei-Freigabe (Share-Funktion)
+   - Verwendet Cache-Verzeichnis (keine Permissions nötig)
+
+**Warum keine Permissions mehr nötig:**
+- Android 10+ (API 29+) führte Scoped Storage ein
+- Apps können nur noch auf ihre eigenen Dateien und MediaStore-Inhalte zugreifen
+- `WRITE_EXTERNAL_STORAGE` wurde für MediaStore-Zugriffe obsolet
+- SAF ermöglicht benutzerdefinierte Speicherorte ohne Permissions
+
+### Lessons Learned
+
+1. **Scoped Storage:** Android 10+ verwendet Scoped Storage, alte Permissions sind nicht mehr wirksam
+2. **MediaStore API:** Keine Runtime-Permissions erforderlich für Speicherung in MediaStore
+3. **SAF:** Storage Access Framework ermöglicht benutzerdefinierte Speicherorte ohne Permissions
+4. **Code-Vereinfachung:** Bei `minSdk` 34 sind Fallbacks für ältere Versionen nicht mehr nötig
+5. **Benutzerfreundlichkeit:** Weniger Permissions = mehr Vertrauen und bessere UX
+
+### Referenzen
+
+- [Android Scoped Storage Documentation](https://developer.android.com/training/data-storage#scoped-storage)
+- [MediaStore API Documentation](https://developer.android.com/reference/android/provider/MediaStore)
+- [Storage Access Framework Documentation](https://developer.android.com/guide/topics/providers/document-provider)
+- [Android 10 Behavior Changes - Scoped Storage](https://developer.android.com/about/versions/10/privacy/changes#scoped-storage)
+
+---
+
+## Iteration 20: [Zukünftige Iterationen]
 
 *Hier werden zukünftige Iterationen dokumentiert...*
 
@@ -2013,6 +2290,8 @@ Ersetzung des generierten Vector-Launcher-Icons durch ein vom Benutzer bereitges
 | 2026-01-09 | Iteration 14 | UI-Verbesserungen - Titel und zentrierte Eingabe | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 15 | QR-Code-Logo hinzugefügt | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 17 | Benutzerdefiniertes Launcher-Icon (PNG) eingebunden | ✅ Abgeschlossen |
+| 2026-01-09 | Iteration 18 | Hilt DataModule Binding-Fehler behoben | ✅ Abgeschlossen |
+| 2026-01-09 | Iteration 19 | Scoped Storage - Veraltete Storage-Permissions entfernt | ✅ Abgeschlossen |
 
 ---
 
@@ -2031,4 +2310,4 @@ Ersetzung des generierten Vector-Launcher-Icons durch ein vom Benutzer bereitges
 
 ---
 
-**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 16 - QR-Code-Launcher-Icon erstellt)
+**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 19 - Scoped Storage - Veraltete Storage-Permissions entfernt)

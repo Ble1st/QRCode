@@ -18,7 +18,7 @@ kotlinxCoroutines = "1.10.2"
 
 # QR-Code & Storage
 zxing = "4.3.0"
-timber = "5.0.1"
+
 
 # Testing
 junit = "4.13.2"
@@ -28,7 +28,6 @@ turbine = "1.2.0"
 
 # Core Android
 coreKtx = "1.17.0"
-appcompat = "1.7.1"
 material = "1.13.0"
 
 [libraries]
@@ -51,12 +50,10 @@ javax-inject = { module = "javax.inject:javax.inject", version = "1" }
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
-kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 # QR-Code & Utilities
 zxing-android-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxing" }
-timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -66,7 +63,6 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 
 # Core Android
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]
