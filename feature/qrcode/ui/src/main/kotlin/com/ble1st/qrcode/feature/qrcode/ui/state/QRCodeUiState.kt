@@ -8,5 +8,6 @@ import android.graphics.Bitmap
 data class QRCodeUiState(
     val qrCodeBitmap: Bitmap? = null,
     val isGenerating: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val successMessage: String? = null
 )

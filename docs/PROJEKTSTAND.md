@@ -1,8 +1,8 @@
 # Projektstand: QR-Code Generator
 
 **Stand:** 9. Januar 2026  
-**Version:** 1.0.1  
-**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert
+**Version:** 1.0.2  
+**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert, UI-Refactoring abgeschlossen
 
 ## Übersicht
 
@@ -334,9 +334,15 @@ Die App folgt Clean Architecture Prinzipien mit klarer Trennung der Schichten:
 - **Features:**
   - Dark/Light Mode Support
   - Dynamische Farben (Android 12+)
-  - Responsive Layout
-  - Loading States
-  - Error Handling mit Fehlermeldungen
+  - Responsive Layout mit Scroll-Funktion
+  - Responsive QR-Code-Größe (80% Bildschirmbreite, min 256dp, max 512dp)
+  - Animationen für QR-Code-Erscheinen/Verschwinden
+  - Material Icons für alle Buttons
+  - Button-Hierarchie (Primär/Sekundär)
+  - Snackbar für Erfolgs- und Fehlermeldungen
+  - Loading States mit Overlay
+  - Moderne Card-Gestaltung mit abgerundeten Ecken
+  - Error Handling mit Snackbar-Feedback
 
 ### State Management
 
@@ -455,7 +461,8 @@ Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Archit
 
 **Status:** ✅ Modulare Architektur vollständig implementiert  
 **Build-Status:** ✅ Alle Build-Fehler behoben, Build erfolgreich  
-**Features:** ✅ Speicher- und Teilen-Funktionen erweitert (Iteration 12)
+**Features:** ✅ Speicher- und Teilen-Funktionen erweitert (Iteration 12)  
+**UI:** ✅ Modernes UI-Refactoring abgeschlossen (Iteration 13)
 
 ## Aktuelle Build-Probleme & Lösungen
 
@@ -487,6 +494,25 @@ Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Archit
   - ViewModel erweitert um `saveQRCodeToGallery()` und `getQRCodeBitmap()`
   - MainActivity erweitert um `shareQRCode()` Funktion
 - **Status:** ✅ Alle drei Optionen funktionieren korrekt
+
+### Iteration 13: UI-Refactoring - Moderne UX-Verbesserungen (9. Januar 2026)
+- **Feature:** Umfassendes UI-Refactoring mit modernen UX-Verbesserungen
+- **Verbesserungen:**
+  1. Scroll-Funktion für alle Bildschirmgrößen
+  2. Responsive QR-Code-Größe (80% Bildschirmbreite, min 256dp, max 512dp)
+  3. Material Icons für alle Buttons (Save, Image, Share)
+  4. Button-Hierarchie mit Primär/Sekundär-Buttons
+  5. Snackbar für Erfolgs- und Fehlermeldungen
+  6. Animationen für QR-Code-Erscheinen/Verschwinden
+  7. Visuelle Verbesserungen (Divider, abgerundete Ecken, moderne Cards)
+  8. Loading-Overlay während Generierung
+- **Technische Details:**
+  - Material Icons Extended Dependency hinzugefügt
+  - UIState erweitert um `successMessage`
+  - ViewModel erweitert um `clearSuccessMessage()` und `clearErrorMessage()`
+  - MainScreen komplett überarbeitet mit Scaffold, Snackbar, Animationen
+  - QRCodeCard Design verbessert mit höherer Elevation und abgerundeten Ecken
+- **Status:** ✅ Alle UI-Verbesserungen implementiert, Build erfolgreich
 
 ## Build-Konfiguration
 

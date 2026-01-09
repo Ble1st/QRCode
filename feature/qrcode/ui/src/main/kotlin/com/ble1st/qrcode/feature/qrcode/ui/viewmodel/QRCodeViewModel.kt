@@ -29,19 +29,20 @@ class QRCodeViewModel @Inject constructor(
     fun generateQRCode(text: String) {
         if (text.isBlank()) {
             Timber.w("Attempted to generate QR code with empty text")
-            _uiState.update { it.copy(qrCodeBitmap = null, errorMessage = "Text darf nicht leer sein") }
+            _uiState.update { it.copy(qrCodeBitmap = null, errorMessage = "Text darf nicht leer sein", successMessage = null) }
             return
         }
         
         viewModelScope.launch {
-            _uiState.update { it.copy(isGenerating = true, errorMessage = null) }
+            _uiState.update { it.copy(isGenerating = true, errorMessage = null, successMessage = null) }
             try {
                 val bitmap = generateQRCodeUseCase(text)
                 _uiState.update { 
                     it.copy(
                         qrCodeBitmap = bitmap,
                         isGenerating = false,
-                        errorMessage = if (bitmap == null) "QR-Code konnte nicht generiert werden" else null
+                        errorMessage = if (bitmap == null) "QR-Code konnte nicht generiert werden" else null,
+                        successMessage = if (bitmap != null) "QR-Code erfolgreich generiert" else null
                     )
                 }
                 Timber.d("QR code generated successfully")
@@ -50,7 +51,8 @@ class QRCodeViewModel @Inject constructor(
                 _uiState.update { 
                     it.copy(
                         isGenerating = false,
-                        errorMessage = "Fehler: ${e.message}"
+                        errorMessage = "Fehler: ${e.message}",
+                        successMessage = null
                     )
                 }
             }
@@ -58,8 +60,16 @@ class QRCodeViewModel @Inject constructor(
     }
     
     fun clearQRCode() {
-        _uiState.update { it.copy(qrCodeBitmap = null, errorMessage = null) }
+        _uiState.update { it.copy(qrCodeBitmap = null, errorMessage = null, successMessage = null) }
         Timber.d("QR code cleared")
+    }
+    
+    fun clearSuccessMessage() {
+        _uiState.update { it.copy(successMessage = null) }
+    }
+    
+    fun clearErrorMessage() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
     
     
@@ -72,21 +82,37 @@ class QRCodeViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
+            _uiState.update { it.copy(successMessage = null) }
             try {
                 val result = saveQRCodeUseCase(bitmap, uri)
                 when (result) {
                     is StorageResult.Success -> {
                         Timber.d("QR code saved successfully: ${result.filePath}")
-                        _uiState.update { it.copy(errorMessage = null) }
+                        _uiState.update { 
+                            it.copy(
+                                errorMessage = null,
+                                successMessage = "QR-Code erfolgreich gespeichert"
+                            ) 
+                        }
                     }
                     is StorageResult.Error -> {
                         Timber.e("Failed to save QR code: ${result.message}")
-                        _uiState.update { it.copy(errorMessage = "Speichern fehlgeschlagen: ${result.message}") }
+                        _uiState.update { 
+                            it.copy(
+                                errorMessage = "Speichern fehlgeschlagen: ${result.message}",
+                                successMessage = null
+                            ) 
+                        }
                     }
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Exception while saving QR code")
-                _uiState.update { it.copy(errorMessage = "Fehler beim Speichern: ${e.message}") }
+                _uiState.update { 
+                    it.copy(
+                        errorMessage = "Fehler beim Speichern: ${e.message}",
+                        successMessage = null
+                    ) 
+                }
             }
         }
     }
@@ -100,21 +126,37 @@ class QRCodeViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
+            _uiState.update { it.copy(successMessage = null) }
             try {
                 val result = saveQRCodeUseCase(bitmap, null, null)
                 when (result) {
                     is StorageResult.Success -> {
                         Timber.d("QR code saved to gallery successfully: ${result.filePath}")
-                        _uiState.update { it.copy(errorMessage = null) }
+                        _uiState.update { 
+                            it.copy(
+                                errorMessage = null,
+                                successMessage = "QR-Code erfolgreich in Galerie gespeichert"
+                            ) 
+                        }
                     }
                     is StorageResult.Error -> {
                         Timber.e("Failed to save QR code to gallery: ${result.message}")
-                        _uiState.update { it.copy(errorMessage = "Speichern in Galerie fehlgeschlagen: ${result.message}") }
+                        _uiState.update { 
+                            it.copy(
+                                errorMessage = "Speichern in Galerie fehlgeschlagen: ${result.message}",
+                                successMessage = null
+                            ) 
+                        }
                     }
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Exception while saving QR code to gallery")
-                _uiState.update { it.copy(errorMessage = "Fehler beim Speichern in Galerie: ${e.message}") }
+                _uiState.update { 
+                    it.copy(
+                        errorMessage = "Fehler beim Speichern in Galerie: ${e.message}",
+                        successMessage = null
+                    ) 
+                }
             }
         }
     }

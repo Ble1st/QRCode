@@ -1350,7 +1350,411 @@ Nach der Änderung sollten folgende Funktionen verfügbar sein:
 
 ---
 
-## Iteration 13: [Zukünftige Iterationen]
+## Iteration 13: UI-Refactoring - Moderne UX-Verbesserungen
+
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Umfassendes UI-Refactoring mit modernen UX-Verbesserungen: Scroll-Funktion, responsive Design, Animationen, Material Icons, Snackbar-Feedback und verbesserte Button-Hierarchie.
+
+### Problem
+
+**Fehlermeldungen:**
+```
+e: Unresolved reference 'icons'.
+e: Unresolved reference 'Icons'.
+```
+
+**UI-Probleme:**
+- Keine Scroll-Funktion für kleine Bildschirme
+- Feste QR-Code-Größe (512dp) nicht responsive
+- Drei gleichwertige Buttons ohne visuelle Hierarchie
+- Keine Icons für bessere Erkennbarkeit
+- Keine Animationen für moderne UX
+- Fehlermeldungen nur als Text, keine Snackbar
+- Keine Erfolgsmeldungen für Benutzer-Feedback
+- Einfaches Card-Design ohne moderne Gestaltung
+
+**Ursache:**
+- Material Icons Extended Dependency fehlte im UI-Modul
+- UI war funktional, aber nicht modern gestaltet
+- Fehlende UX-Best-Practices implementiert
+
+**Auswirkung:**
+- Build schlug fehl wegen fehlender Material Icons Dependency
+- UI war nicht benutzerfreundlich genug
+- Fehlende visuelle Feedback-Mechanismen
+
+### Lösung
+
+**1. Material Icons Extended Dependency hinzugefügt**
+
+**Datei:** `gradle/libs.versions.toml`
+
+**Änderung:**
+```toml
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+```
+
+**Datei:** `feature/qrcode/ui/build.gradle.kts`
+
+**Änderung:**
+```kotlin
+implementation(libs.androidx.compose.material.icons.extended)
+```
+
+**Begründung:**
+- Material Icons Extended enthält alle Standard-Icons (Save, Image, Share)
+- Erforderlich für Icon-Buttons und Button-Icons
+- Teil des Material Design 3 Systems
+
+**2. UIState erweitert für Erfolgsmeldungen**
+
+**Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/state/QRCodeUiState.kt`
+
+**Änderung:**
+```kotlin
+data class QRCodeUiState(
+    val qrCodeBitmap: Bitmap? = null,
+    val isGenerating: Boolean = false,
+    val errorMessage: String? = null,
+    val successMessage: String? = null  // Neu hinzugefügt
+)
+```
+
+**Begründung:**
+- Erfolgsmeldungen für alle Speicher-Aktionen
+- Besseres Benutzer-Feedback
+- Automatisches Clearing nach Anzeige
+
+**3. ViewModel erweitert für Snackbar-Feedback**
+
+**Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/viewmodel/QRCodeViewModel.kt`
+
+**Neue Funktionen:**
+- `clearSuccessMessage()`: Löscht Erfolgsmeldungen
+- `clearErrorMessage()`: Löscht Fehlermeldungen
+- Erfolgsmeldungen für alle Speicher-Aktionen hinzugefügt
+
+**Änderungen:**
+- `generateQRCode()`: Erfolgsmeldung "QR-Code erfolgreich generiert"
+- `saveQRCode()`: Erfolgsmeldung "QR-Code erfolgreich gespeichert"
+- `saveQRCodeToGallery()`: Erfolgsmeldung "QR-Code erfolgreich in Galerie gespeichert"
+
+**Begründung:**
+- Klare Erfolgsmeldungen für alle Aktionen
+- Automatisches Clearing verhindert alte Meldungen
+- Konsistente Fehlerbehandlung
+
+**4. MainScreen komplett überarbeitet**
+
+**Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/screen/MainScreen.kt`
+
+**Hauptänderungen:**
+
+**a) Scroll-Funktion:**
+```kotlin
+Column(
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(paddingValues)
+        .padding(16.dp)
+        .verticalScroll(scrollState),  // Neu hinzugefügt
+    ...
+)
+```
+
+**b) Responsive QR-Code-Größe:**
+```kotlin
+val configuration = LocalConfiguration.current
+val screenWidth = configuration.screenWidthDp.dp
+val qrCodeSize = remember(screenWidth) {
+    val calculatedSize = screenWidth * 0.8f
+    when {
+        calculatedSize > 512.dp -> 512.dp
+        calculatedSize < 256.dp -> 256.dp
+        else -> calculatedSize
+    }
+}
+```
+
+**c) Snackbar für Feedback:**
+```kotlin
+val snackbarHostState = remember { SnackbarHostState() }
+
+LaunchedEffect(uiState.successMessage) {
+    uiState.successMessage?.let { message ->
+        snackbarHostState.showSnackbar(message)
+        viewModel.clearSuccessMessage()
+    }
+}
+
+Scaffold(
+    snackbarHost = {
+        SnackbarHost(hostState = snackbarHostState) { data ->
+            Snackbar(
+                snackbarData = data,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+) { ... }
+```
+
+**d) Animationen:**
+```kotlin
+AnimatedVisibility(
+    visible = uiState.qrCodeBitmap != null,
+    enter = fadeIn(animationSpec = tween(500)) + slideInVertically(
+        initialOffsetY = { it / 2 },
+        animationSpec = tween(500)
+    ),
+    exit = fadeOut(animationSpec = tween(300)) + slideOutVertically(
+        targetOffsetY = { it / 2 },
+        animationSpec = tween(300)
+    )
+) {
+    // QR Code Display
+}
+```
+
+**e) Button-Design mit Icons:**
+```kotlin
+// Primär-Button mit Icon
+FilledTonalButton(
+    onClick = onSaveClick,
+    modifier = Modifier.fillMaxWidth(),
+    shape = RoundedCornerShape(12.dp)
+) {
+    Icon(
+        imageVector = Icons.Default.Save,
+        contentDescription = null,
+        modifier = Modifier.size(18.dp)
+    )
+    Spacer(modifier = Modifier.width(8.dp))
+    Text("Speicherplatz wählen")
+}
+
+// Sekundäre Buttons in Row
+Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    Button(
+        onClick = onSaveToGalleryClick,
+        modifier = Modifier.weight(1f),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Icon(Icons.Default.Image, ...)
+        Spacer(...)
+        Text("Galerie")
+    }
+    
+    Button(
+        onClick = onShareClick,
+        modifier = Modifier.weight(1f),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Icon(Icons.Default.Share, ...)
+        Spacer(...)
+        Text("Teilen")
+    }
+}
+```
+
+**f) Visuelle Verbesserungen:**
+- Divider zwischen Eingabe und QR-Code
+- Abgerundete Ecken für alle Komponenten (12-16dp)
+- Verbesserte Card mit höherer Elevation
+- Loading-Overlay während Generierung
+- Scaffold-Struktur für bessere Layout-Kontrolle
+
+**5. QRCodeCard Design verbessert**
+
+**Datei:** `core/designsystem/src/main/kotlin/com/ble1st/qrcode/core/designsystem/components/QRCodeCard.kt`
+
+**Änderung:**
+```kotlin
+Card(
+    modifier = modifier,
+    elevation = CardDefaults.cardElevation(
+        defaultElevation = 6.dp,  // Erhöht von 4.dp
+        pressedElevation = 8.dp   // Neu hinzugefügt
+    ),
+    shape = RoundedCornerShape(16.dp),  // Neu hinzugefügt
+    colors = CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.surface
+    )
+) {
+    content()
+}
+```
+
+**Begründung:**
+- Moderneres Design mit abgerundeten Ecken
+- Höhere Elevation für bessere Tiefe
+- Pressed-Elevation für Interaktivität
+
+### Ergebnis
+
+✅ Material Icons Extended Dependency hinzugefügt  
+✅ Scroll-Funktion für alle Bildschirmgrößen  
+✅ Responsive QR-Code-Größe (80% Bildschirmbreite, min 256dp, max 512dp)  
+✅ Button-Hierarchie mit Icons implementiert  
+✅ Snackbar für Erfolgs- und Fehlermeldungen  
+✅ Animationen für QR-Code-Erscheinen/Verschwinden  
+✅ Visuelle Verbesserungen (Divider, abgerundete Ecken, moderne Cards)  
+✅ Loading-Overlay während Generierung  
+✅ Erfolgsmeldungen für alle Aktionen  
+✅ UIState erweitert für besseres State Management  
+✅ Build erfolgreich - alle Kompilierungsfehler behoben
+
+### Verifizierung
+
+Nach der Änderung sollte:
+- ✅ Build erfolgreich sein ohne Kompilierungsfehler
+- ✅ QR-Code responsive auf allen Bildschirmgrößen angezeigt werden
+- ✅ Scroll-Funktion auf kleinen Bildschirmen funktionieren
+- ✅ Buttons mit Icons angezeigt werden
+- ✅ Snackbar bei Erfolg/Fehler erscheinen
+- ✅ Animationen beim Erscheinen des QR-Codes sichtbar sein
+
+### Lessons Learned
+
+1. **Material Icons:** Extended Icons müssen separat als Dependency hinzugefügt werden
+2. **Responsive Design:** Bildschirmgröße zur Laufzeit berechnen für adaptive UI
+3. **Animationen:** `AnimatedVisibility` bietet einfache, performante Animationen
+4. **Snackbar:** Besseres Feedback als einfache Text-Meldungen
+5. **Button-Hierarchie:** Primär/Sekundär-Buttons verbessern UX deutlich
+6. **Scaffold:** Strukturiertes Layout mit Snackbar-Host
+7. **State Management:** Erfolgsmeldungen separat verwalten für besseres Feedback
+
+### Referenzen
+
+- [Material Icons Extended Documentation](https://developer.android.com/jetpack/compose/graphics/images/vector-drawable-resources#material-icons)
+- [AnimatedVisibility Documentation](https://developer.android.com/jetpack/compose/animation#animatedvisibility)
+- [Snackbar Documentation](https://developer.android.com/jetpack/compose/components/snackbar)
+- [Material Design 3 Button Hierarchy](https://m3.material.io/components/buttons/guidelines)
+
+---
+
+## Iteration 14: UI-Verbesserungen - Titel und zentrierte Eingabe
+
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Hinzufügen eines Titels "QR-Code Generator" oben im Screen und Zentrierung des Eingabefelds für bessere visuelle Hierarchie und Benutzerfreundlichkeit.
+
+### Durchgeführte Änderungen
+
+**1. Titel hinzugefügt**
+
+**Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/screen/MainScreen.kt`
+
+**Änderung:**
+```kotlin
+// Title
+Text(
+    text = "QR-Code Generator",
+    style = MaterialTheme.typography.headlineLarge,
+    color = MaterialTheme.colorScheme.primary,
+    modifier = Modifier.padding(vertical = 8.dp)
+)
+
+Spacer(modifier = Modifier.height(8.dp))
+```
+
+**Begründung:**
+- Klare Überschrift für bessere Orientierung
+- Verwendet Material 3 `headlineLarge` Typography
+- Primary-Farbe für visuelle Hervorhebung
+- Spacer für angemessenen Abstand zum Eingabefeld
+
+**2. Eingabefeld zentriert**
+
+**Datei:** `feature/qrcode/ui/src/main/kotlin/com/ble1st/qrcode/feature/qrcode/ui/screen/MainScreen.kt`
+
+**Änderung:**
+```kotlin
+Column(
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)
+        .verticalScroll(scrollState),
+    horizontalAlignment = Alignment.CenterHorizontally,  // Neu hinzugefügt
+    verticalArrangement = Arrangement.spacedBy(16.dp)
+) {
+    // ...
+}
+```
+
+**Begründung:**
+- Zentrierte horizontale Ausrichtung für alle Elemente
+- Bessere visuelle Balance
+- Professionelleres Erscheinungsbild
+
+**3. API-Level-Kompatibilität verbessert**
+
+**Problem:** `LocalConfiguration.current.screenWidthDp` erforderte API Level 13
+
+**Lösung:** `BoxWithConstraints` verwendet
+
+**Änderung:**
+```kotlin
+// Vorher:
+val configuration = LocalConfiguration.current
+val screenWidth = configuration.screenWidthDp.dp  // ❌ API Level 13 erforderlich
+
+// Nachher:
+BoxWithConstraints(...) {
+    val qrCodeSize = remember(maxWidth) {  // ✅ Keine API-Level-Anforderungen
+        val calculatedSize = maxWidth * 0.8f
+        // ...
+    }
+}
+```
+
+**Begründung:**
+- `BoxWithConstraints` ist die empfohlene Compose-Methode
+- Keine API-Level-Anforderungen
+- Funktioniert mit allen Android-Versionen
+- Bessere Performance durch direkten Zugriff auf Constraints
+
+### Ergebnis
+
+✅ Titel "QR-Code Generator" oben hinzugefügt  
+✅ Eingabefeld und alle Elemente zentriert  
+✅ API-Level-Kompatibilität verbessert  
+✅ Bessere visuelle Hierarchie  
+✅ Professionelleres Erscheinungsbild  
+✅ Keine Linter-Fehler
+
+### Verifizierung
+
+Nach der Änderung sollte:
+- ✅ Titel oben sichtbar sein mit Primary-Farbe
+- ✅ Alle UI-Elemente horizontal zentriert sein
+- ✅ Responsive QR-Code-Größe weiterhin funktionieren
+- ✅ Build ohne API-Level-Warnungen erfolgreich sein
+
+### Lessons Learned
+
+1. **Titel-Hierarchie:** Klare Überschriften verbessern UX deutlich
+2. **Zentrierung:** `horizontalAlignment` in Column für zentrierte Ausrichtung
+3. **BoxWithConstraints:** Bessere Alternative zu `LocalConfiguration` für responsive Layouts
+4. **API-Kompatibilität:** Compose-APIs sind oft API-Level-unabhängig
+
+### Referenzen
+
+- [BoxWithConstraints Documentation](https://developer.android.com/jetpack/compose/layouts/box#boxwithconstraints)
+- [Material 3 Typography](https://m3.material.io/styles/typography/overview)
+
+---
+
+## Iteration 15: [Zukünftige Iterationen]
 
 *Hier werden zukünftige Iterationen dokumentiert...*
 
@@ -1372,6 +1776,8 @@ Nach der Änderung sollten folgende Funktionen verfügbar sein:
 | 2026-01-09 | Iteration 10 | Build-Fehlerbehebung - Fehlende Data-Modul Dependency | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 11 | Build-Fehlerbehebung - BuildConfig zur Kompilierungszeit nicht verfügbar | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 12 | QR-Code Speicher- und Teilen-Funktionen erweitert | ✅ Abgeschlossen |
+| 2026-01-09 | Iteration 13 | UI-Refactoring - Moderne UX-Verbesserungen | ✅ Abgeschlossen |
+| 2026-01-09 | Iteration 14 | UI-Verbesserungen - Titel und zentrierte Eingabe | ✅ Abgeschlossen |
 
 ---
 
@@ -1390,4 +1796,4 @@ Nach der Änderung sollten folgende Funktionen verfügbar sein:
 
 ---
 
-**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 12 - QR-Code Speicher- und Teilen-Funktionen erweitert)
+**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 14 - Titel und zentrierte Eingabe hinzugefügt)
