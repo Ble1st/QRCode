@@ -1,8 +1,8 @@
 # Projektstand: QR-Code Generator
 
 **Stand:** 9. Januar 2026  
-**Version:** 1.0.5  
-**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert, UI-Refactoring abgeschlossen, Authentisches Launcher-Icon eingebunden, Hilt-Bindings korrigiert, Scoped Storage korrekt implementiert
+**Version:** 1.0.6  
+**Status:** ✅ Modulare Architektur implementiert, Build-Fehler behoben, Speicher- und Teilen-Funktionen erweitert, UI-Refactoring abgeschlossen, Authentisches Launcher-Icon eingebunden, Hilt-Bindings korrigiert, Scoped Storage korrekt implementiert, CI/CD Pipeline und Dokumentation vollständig
 
 ## Übersicht
 
@@ -464,7 +464,9 @@ Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Archit
 **Features:** ✅ Speicher- und Teilen-Funktionen erweitert (Iteration 12)  
 **UI:** ✅ Modernes UI-Refactoring abgeschlossen (Iteration 13)  
 **Hilt:** ✅ Alle Dependency-Injection-Bindings korrekt konfiguriert (Iteration 18)  
-**Storage:** ✅ Scoped Storage korrekt implementiert, keine veralteten Permissions (Iteration 19)
+**Storage:** ✅ Scoped Storage korrekt implementiert, keine veralteten Permissions (Iteration 19)  
+**CI/CD:** ✅ GitHub Actions Pipeline für automatischen Build und Release (Iteration 20)  
+**Dokumentation:** ✅ Vollständige README.md und CI/CD Dokumentation (Iteration 20)
 
 ## Aktuelle Build-Probleme & Lösungen
 
@@ -507,6 +509,18 @@ Die QR-Code Generator App wurde erfolgreich in eine modulare, skalierbare Archit
   - Code in `FileStorageManager` vereinfacht (keine Version-Checks mehr nötig, da `minSdk` 34 ist).
   - App verwendet ausschließlich Scoped Storage (MediaStore API und SAF) - keine Permissions erforderlich.
 - **Status:** ✅ Keine Warnungen mehr, Code vereinfacht, bessere Benutzerfreundlichkeit.
+
+### Iteration 20: CI/CD Pipeline und Dokumentation (9. Januar 2026)
+- **Beschreibung:** Erstellung einer GitHub Actions CI/CD Pipeline für automatischen Build und Release sowie vollständige README.md Dokumentation.
+- **Durchgeführte Änderungen:**
+  - GitHub Actions CI/CD Pipeline erstellt (`.github/workflows/build-and-release.yml`)
+  - README.md mit vollständiger Dokumentation erstellt
+  - LICENSE-Datei (MIT License) hinzugefügt
+  - CI/CD Pipeline Dokumentation (`.github/README.md`) erstellt
+  - README.md optimiert (Changelog, Danksagung, Nächste Schritte entfernt)
+  - Funktionsweise und Funktionen detailliert dokumentiert
+  - Dependency-Versionen-Hinweis hinzugefügt
+- **Status:** ✅ CI/CD Pipeline vollständig implementiert, Dokumentation komplett
 
 **Details:** Siehe `docs/ITERATIONEN.md` für vollständige Dokumentation aller Iterationen.
 

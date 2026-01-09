@@ -1,6 +1,6 @@
 # QR-Code Generator Android App
 
-**Version:** 1.0.5  
+**Version:** 1.0.6  
 **Stand:** 9. Januar 2026  
 **Status:** ✅ Produktionsbereit
 
@@ -134,38 +134,154 @@ QRCode/
 - **Type-safe Project Accessors:** Moderne Gradle-Features
 - **KSP:** Für Hilt Code-Generierung
 
+### ⚠️ Dependency-Versionen
+
+**Wichtiger Hinweis:** Einige Dependency-Versionen sind bewusst älter als die neuesten verfügbaren Versionen, um Kompatibilitätskonflikte zu vermeiden.
+
+**Beispiele:**
+- **Kotlin 2.2.20** statt 2.3.0+: Hilt 2.57.2 unterstützt maximal Kotlin 2.2.0 Metadata-Version
+- **KSP 2.2.20-2.0.4** statt neuerer Versionen: Muss mit Kotlin-Version kompatibel sein
+- **Hilt 2.57.2**: Stabile Version, die mit Kotlin 2.2.20 kompatibel ist
+
+Diese Versionen wurden nach ausführlichem Testing ausgewählt, um sicherzustellen, dass alle Dependencies reibungslos zusammenarbeiten. Ein Upgrade einzelner Dependencies kann zu Inkompatibilitäten führen und erfordert sorgfältige Kompatibilitätstests.
+
 ---
 
-## 📋 Implementierte Features
+## ⚙️ Funktionsweise
 
-### Funktionale Features
+### App-Ablauf
 
-- ✅ **Text-Eingabe:** Benutzer kann Text oder URL eingeben
-- ✅ **QR-Code Generierung:** Automatische Generierung von QR-Codes aus eingegebenem Text
-- ✅ **QR-Code Anzeige:** Visuelle Darstellung des generierten QR-Codes
-- ✅ **Dateispeicherung:** 
-  - Speicherplatz wählen (Storage Access Framework)
-  - In Galerie speichern (MediaStore API)
-  - Teilen (FileProvider-basierte Share-Funktion)
+1. **App-Start:**
+   - `QRCodeApplication` initialisiert Hilt Dependency Injection
+   - Timber-Logging wird für Debug-Builds aktiviert
+   - `MainActivity` wird gestartet und lädt `MainScreen` Composable
 
-### Technische Features
+2. **Texteingabe:**
+   - Benutzer gibt Text oder URL in das `OutlinedTextField` ein
+   - Bei jeder Änderung wird `QRCodeViewModel.generateQRCode()` aufgerufen
+   - Der Text wird an `GenerateQRCodeUseCase` weitergegeben
 
-- ✅ **Modulare Architektur:** Clean Architecture mit separaten Modulen
-- ✅ **Dependency Injection:** Hilt für Dependency Management
-- ✅ **Reaktive UI:** Jetpack Compose mit StateFlow
-- ✅ **Material Design 3:** Moderne UI-Komponenten
-- ✅ **Asynchrone Programmierung:** Kotlin Coroutines
-- ✅ **Scoped Storage:** Korrekte Implementierung ohne veraltete Permissions
-- ✅ **Version Catalog:** Zentrale Dependency-Verwaltung
+3. **QR-Code-Generierung:**
+   - `GenerateQRCodeUseCase` ruft `QRCodeRepository.generateQRCode()` auf
+   - `QRCodeRepositoryImpl` delegiert an `QRCodeGenerator`
+   - `QRCodeGenerator` verwendet ZXing-Bibliothek zur QR-Code-Erstellung
+   - Ergebnis wird als `Bitmap` zurückgegeben
 
-### UI/UX Features
+4. **QR-Code-Anzeige:**
+   - `QRCodeViewModel` aktualisiert `StateFlow<QRCodeUiState>`
+   - `MainScreen` beobachtet den State mit `collectAsState()`
+   - QR-Code wird in einer Material 3 Card mit Animationen angezeigt
+   - Größe passt sich responsiv an die Bildschirmbreite an
 
-- ✅ **Responsive Design:** Anpassung an alle Bildschirmgrößen
-- ✅ **Scroll-Funktion:** Für kleine Bildschirme
-- ✅ **Material Icons:** Für bessere Erkennbarkeit
-- ✅ **Snackbar-Feedback:** Erfolgs- und Fehlermeldungen
-- ✅ **Animationen:** Für moderne UX
-- ✅ **Dark/Light Mode Support:** Material 3 Theming
+5. **Speicherung/Teilen:**
+   - **Speicherplatz wählen:** SAF-Dialog öffnet sich, Benutzer wählt Speicherort
+   - **In Galerie speichern:** MediaStore API speichert direkt in `Pictures/QRCode`
+   - **Teilen:** FileProvider erstellt temporäre Datei, Share-Intent wird gestartet
+
+### Datenfluss
+
+```
+UI Layer (MainScreen)
+    ↓ (Events)
+ViewModel (QRCodeViewModel)
+    ↓ (Use Cases)
+Domain Layer (GenerateQRCodeUseCase, SaveQRCodeUseCase)
+    ↓ (Repository Interface)
+Data Layer (QRCodeRepositoryImpl)
+    ↓ (Data Sources)
+QRCodeGenerator / FileStorageManager
+```
+
+### State Management
+
+- **StateFlow:** Reaktives State-Management für UI-Updates
+- **Unidirectional Data Flow:** Events fließen von UI → ViewModel → Domain → Data
+- **State Updates:** State fließt von Data → Domain → ViewModel → UI
+
+---
+
+## 📋 Funktionen im Detail
+
+### 1. QR-Code-Generierung
+
+**Funktionsweise:**
+- Eingabetext wird an ZXing-Bibliothek übergeben
+- QR-Code wird mit UTF-8 Encoding und Error Correction Level M generiert
+- Standard-Größe: 512x512 Pixel (anpassbar)
+- Ergebnis wird als Bitmap im Memory gespeichert
+
+**Technische Details:**
+- Verwendet `com.journeyapps:zxing-android-embedded:4.3.0`
+- Asynchrone Generierung über Kotlin Coroutines
+- Fehlerbehandlung mit Timber-Logging
+
+### 2. QR-Code-Anzeige
+
+**Funktionsweise:**
+- Bitmap wird in `StateFlow` gespeichert
+- Compose UI reagiert automatisch auf State-Änderungen
+- QR-Code wird in Material 3 Card mit Elevation angezeigt
+- Responsive Größe: 80% Bildschirmbreite (min 256dp, max 512dp)
+
+**UI-Features:**
+- Fade-In/Slide-In Animationen beim Erscheinen
+- Scroll-Funktion für kleine Bildschirme
+- Dark/Light Mode Support über Material 3 Theming
+
+### 3. Speicher-Optionen
+
+#### Option 1: Speicherplatz wählen (SAF)
+- **Funktionsweise:** Storage Access Framework Dialog öffnet sich
+- **Vorteil:** Benutzer hat volle Kontrolle über Speicherort
+- **Implementierung:** `ActivityResultContracts.CreateDocument`
+- **Keine Permissions nötig:** SAF erfordert keine Runtime-Permissions
+
+#### Option 2: In Galerie speichern
+- **Funktionsweise:** MediaStore API erstellt Eintrag in `Pictures/QRCode`
+- **Vorteil:** Direkte Speicherung ohne Benutzerinteraktion
+- **Implementierung:** `MediaStore.Images.Media` API
+- **Sichtbarkeit:** Datei ist sofort in Galerie-App sichtbar
+
+#### Option 3: Teilen
+- **Funktionsweise:** FileProvider erstellt temporäre Datei im Cache
+- **Vorteil:** Unterstützt alle Share-Apps (WhatsApp, E-Mail, etc.)
+- **Implementierung:** `FileProvider` mit `ACTION_SEND` Intent
+- **Sicherheit:** Temporäre Dateien werden automatisch bereinigt
+
+### 4. UI/UX-Features
+
+**Responsive Design:**
+- QR-Code-Größe passt sich an Bildschirmbreite an
+- Scroll-Funktion für kleine Bildschirme
+- Zentrierte Ausrichtung für bessere Balance
+
+**Feedback-Mechanismen:**
+- Snackbar für Erfolgsmeldungen (grün)
+- Snackbar für Fehlermeldungen (rot)
+- Loading-States während Generierung
+
+**Material Design 3:**
+- Expressive Shapes für moderne Optik
+- Material Icons für bessere Erkennbarkeit
+- Dark/Light Mode Support
+- Konsistente Farbgebung
+
+### 5. Architektur-Features
+
+**Clean Architecture:**
+- Klare Trennung: UI → Domain → Data
+- Unabhängige Testbarkeit jeder Schicht
+- Wiederverwendbare Use Cases
+
+**Dependency Injection:**
+- Hilt für automatische Dependency-Verwaltung
+- Module-basierte Struktur
+- Einfache Mocking für Tests
+
+**Reaktive Programmierung:**
+- StateFlow für UI-State
+- Coroutines für asynchrone Operationen
+- Flow-basierte Datenströme
 
 ---
 
@@ -195,7 +311,7 @@ QRCode/
 - **Min SDK:** 34 (Android 14)
 - **Target SDK:** 36
 - **Version Code:** 1
-- **Version Name:** 1.0.5
+- **Version Name:** 1.0.6
 
 ### Voraussetzungen
 
@@ -208,36 +324,74 @@ QRCode/
 
 ## 🚀 Build & Installation
 
-### Projekt synchronisieren
+### Lokaler Build
+
+#### Projekt synchronisieren
 
 ```bash
 ./gradlew build --refresh-dependencies
 ```
 
-### Debug-Build erstellen
+#### Debug-Build erstellen
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-### Release-Build erstellen
+#### Release-Build erstellen
 
 ```bash
 ./gradlew assembleRelease
 ```
 
-### Tests ausführen
+#### Tests ausführen
 
 ```bash
 ./gradlew test
 ```
 
-### APK-Installation
+#### APK-Installation
 
 Die generierte APK befindet sich unter:
 ```
 app/build/outputs/apk/debug/app-debug.apk
 ```
+
+### CI/CD Pipeline (GitHub Actions)
+
+Die App verwendet eine automatische CI/CD Pipeline für Build und Release:
+
+#### Automatischer Build & Release
+
+Die Pipeline wird automatisch ausgelöst, wenn ein Git Tag mit dem Format `v*` gepusht wird:
+
+```bash
+# Erste Release erstellen (Version 1.0.0)
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+#### Pipeline-Features
+
+- ✅ **JDK 21:** Verwendet Java Development Kit 21
+- ✅ **Automatischer Build:** Führt `assembleDebug` aus
+- ✅ **APK-Umbenennung:** Erstellt `qr-generator.apk`
+- ✅ **SHA256 Checksumme:** Erstellt `qr-generator.apk.sha256sum`
+- ✅ **GitHub Release:** Automatisches Release mit APK und Checksumme
+
+#### Release-Artefakte
+
+Jedes Release enthält:
+- `qr-generator.apk` - Die installierbare Android APK
+- `qr-generator.apk.sha256sum` - SHA256 Checksumme zur Verifizierung
+
+#### Checksumme verifizieren
+
+```bash
+sha256sum -c qr-generator.apk.sha256sum
+```
+
+Weitere Informationen zur CI/CD Pipeline finden Sie in [.github/README.md](.github/README.md).
 
 ---
 
@@ -301,7 +455,7 @@ Die App wurde manuell getestet für:
 
 ### Iterationen
 
-Die App wurde in 19 Iterationen entwickelt:
+Die App wurde in 20 Iterationen entwickelt:
 
 1. Modulare Architektur Implementierung
 2-11. Build-Fehlerbehebungen
@@ -313,34 +467,9 @@ Die App wurde in 19 Iterationen entwickelt:
 17. Benutzerdefiniertes Launcher-Icon (PNG) eingebunden
 18. Hilt DataModule Binding-Fehler behoben
 19. Scoped Storage - Veraltete Storage-Permissions entfernt
+20. CI/CD Pipeline und Dokumentation
 
 Siehe `docs/ITERATIONEN.md` für vollständige Details.
-
----
-
-## 🔄 Nächste Schritte
-
-### Geplante Verbesserungen
-
-1. **Testing:**
-   - Unit Tests für Use Cases
-   - Unit Tests für Repository Implementations
-   - UI Tests für Compose Screens
-
-2. **Features:**
-   - QR-Code-Scanning (optional)
-   - QR-Code-Historie
-   - Verschiedene QR-Code-Formate
-   - Export-Optionen (SVG, etc.)
-
-3. **Code-Qualität:**
-   - Code-Dokumentation erweitern
-   - Performance-Optimierungen
-
-4. **Dokumentation:**
-   - API-Dokumentation
-   - Entwickler-Guide
-   - Architektur-Diagramme
 
 ---
 
@@ -350,55 +479,39 @@ Aktuell keine bekannten Probleme. Alle Build-Fehler wurden behoben.
 
 ---
 
-## 📝 Changelog
-
-### Version 1.0.5 (9. Januar 2026)
-- ✅ Scoped Storage korrekt implementiert
-- ✅ Veraltete Storage-Permissions entfernt
-- ✅ Code vereinfacht (keine Version-Checks mehr nötig)
-
-### Version 1.0.4 (9. Januar 2026)
-- ✅ Hilt DataModule Binding-Fehler behoben
-- ✅ Alle Dependency-Injection-Bindings korrekt konfiguriert
-
-### Version 1.0.3 (9. Januar 2026)
-- ✅ Benutzerdefiniertes Launcher-Icon (PNG) eingebunden
-- ✅ Authentisches QR-Code-Design im App-Drawer
-
-### Version 1.0.2 (9. Januar 2026)
-- ✅ UI-Refactoring mit modernen UX-Verbesserungen
-- ✅ Speicher- und Teilen-Funktionen erweitert
-
-### Version 1.0.1 (9. Januar 2026)
-- ✅ Modulare Architektur implementiert
-- ✅ Alle Build-Fehler behoben
-
-### Version 1.0.0 (9. Januar 2026)
-- ✅ Initiale Implementierung
-- ✅ MVP-Features vollständig implementiert
-
----
-
 ## 👥 Entwickler
 
 **Projekt:** QR-Code Generator Android App  
 **Entwickelt mit:** Android Studio, Kotlin, Jetpack Compose  
 **Architektur:** Clean Architecture, MVVM Pattern  
-**Dependency Injection:** Hilt
+**Dependency Injection:** Hilt  
+**Entwicklung:** Komplett mit KI erstellt - Cursor
 
 ---
 
 ## 📄 Lizenz
 
-Dieses Projekt wurde im Rahmen einer Homeoffice-Aufgabe entwickelt.
+MIT License
 
----
+Copyright (c) 2026 QR-Code Generator
 
-## 🙏 Danksagungen
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-- **ZXing:** Für die QR-Code-Generierungs-Bibliothek
-- **Google:** Für Jetpack Compose und Material Design 3
-- **Android Developer Community:** Für Best Practices und Dokumentation
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ---
 

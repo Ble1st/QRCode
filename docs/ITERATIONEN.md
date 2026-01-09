@@ -2264,7 +2264,144 @@ Nach der Änderung sollte:
 
 ---
 
-## Iteration 20: [Zukünftige Iterationen]
+## Iteration 20: CI/CD Pipeline und Dokumentation
+
+**Datum:** 9. Januar 2026  
+**Status:** ✅ Abgeschlossen
+
+### Beschreibung
+Erstellung einer GitHub Actions CI/CD Pipeline für automatischen Build und Release sowie vollständige README.md Dokumentation.
+
+### Durchgeführte Änderungen
+
+**1. GitHub Actions CI/CD Pipeline erstellt**
+
+**Datei:** `.github/workflows/build-and-release.yml`
+
+**Features:**
+- Automatischer Build mit JDK 21
+- `assembleDebug` Ausführung
+- APK-Umbenennung zu `qr-generator.apk`
+- SHA256 Checksumme-Generierung
+- Automatisches GitHub Release mit APK und Checksumme
+
+**Trigger:**
+- Automatisch bei Git Tags mit Format `v*` (z.B. `v1.0.0`)
+- Manuell über GitHub Actions UI (`workflow_dispatch`)
+
+**Pipeline-Struktur:**
+1. **Build Job:**
+   - Checkout Code
+   - JDK 21 Setup mit Gradle Caching
+   - `assembleDebug` ausführen
+   - APK umbenennen
+   - SHA256 Checksumme erstellen
+   - Artifact Upload
+
+2. **Release Job:**
+   - Artifact Download
+   - Version aus Git Tag extrahieren
+   - GitHub Release erstellen mit APK und Checksumme
+
+**2. README.md erstellt**
+
+**Datei:** `README.md`
+
+**Inhalte:**
+- Projektübersicht und Anforderungen
+- Detaillierte Funktionsweise der App
+- Alle Funktionen im Detail erklärt
+- Architektur-Beschreibung
+- Technologie-Stack mit Dependency-Versionen-Hinweis
+- Build & Installation Anleitung
+- CI/CD Pipeline Dokumentation
+- Verwendung der App
+- Testing-Informationen
+
+**3. LICENSE-Datei erstellt**
+
+**Datei:** `LICENSE`
+
+**Inhalt:**
+- MIT License
+- Vollständiger Lizenztext
+
+**4. README.md Optimierungen**
+
+**Entfernt:**
+- Changelog-Abschnitt
+- Danksagungs-Abschnitt
+- "Nächste Schritte" Abschnitt
+
+**Hinzugefügt:**
+- Detaillierte Funktionsweise der App
+- Funktionen im Detail mit technischen Erklärungen
+- Dependency-Versionen-Hinweis (warum einige Versionen älter sind)
+- Entwickler-Information: "Komplett mit KI erstellt - Cursor"
+
+**5. CI/CD Pipeline Dokumentation**
+
+**Datei:** `.github/README.md`
+
+**Inhalte:**
+- Übersicht der Pipeline
+- Verwendung (Tag erstellen, manuelles Auslösen)
+- Release-Artefakte
+- Checksumme-Verifizierung
+- Konfiguration
+- Troubleshooting
+
+### Ergebnis
+
+✅ GitHub Actions CI/CD Pipeline vollständig implementiert  
+✅ Automatischer Build und Release bei Git Tags  
+✅ README.md mit vollständiger Dokumentation erstellt  
+✅ LICENSE-Datei (MIT License) hinzugefügt  
+✅ CI/CD Pipeline Dokumentation erstellt  
+✅ README.md optimiert (Changelog, Danksagung, Nächste Schritte entfernt)  
+✅ Funktionsweise und Funktionen detailliert dokumentiert  
+✅ Dependency-Versionen-Hinweis hinzugefügt
+
+### Verifizierung
+
+Nach der Änderung sollte:
+- ✅ CI/CD Pipeline bei Git Tag `v1.0.0` automatisch starten
+- ✅ APK als `qr-generator.apk` erstellt werden
+- ✅ SHA256 Checksumme generiert werden
+- ✅ GitHub Release mit beiden Dateien erstellt werden
+- ✅ README.md alle wichtigen Informationen enthalten
+
+### Technische Details
+
+**CI/CD Pipeline:**
+- **JDK:** 21 (Temurin Distribution)
+- **Build:** `assembleDebug`
+- **APK-Name:** `qr-generator.apk`
+- **Checksumme:** `qr-generator.apk.sha256sum`
+- **Release:** Automatisch bei Git Tags
+
+**Dokumentation:**
+- **README.md:** Vollständige Projekt-Dokumentation
+- **LICENSE:** MIT License
+- **.github/README.md:** CI/CD Pipeline Dokumentation
+
+### Lessons Learned
+
+1. **CI/CD Pipeline:** GitHub Actions ermöglicht einfache Automatisierung
+2. **Dokumentation:** Vollständige README verbessert Projekt-Verständnis
+3. **Versionierung:** Git Tags sind ideal für automatische Releases
+4. **Checksummen:** SHA256 Checksummen für Sicherheit und Verifizierung
+5. **Dependency-Versionen:** Wichtig zu dokumentieren, warum bestimmte Versionen gewählt wurden
+
+### Referenzen
+
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Git Tags Documentation](https://git-scm.com/book/en/v2/Git-Basics-Tagging)
+- [MIT License](https://opensource.org/licenses/MIT)
+
+---
+
+## Iteration 21: [Zukünftige Iterationen]
 
 *Hier werden zukünftige Iterationen dokumentiert...*
 
@@ -2292,6 +2429,7 @@ Nach der Änderung sollte:
 | 2026-01-09 | Iteration 17 | Benutzerdefiniertes Launcher-Icon (PNG) eingebunden | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 18 | Hilt DataModule Binding-Fehler behoben | ✅ Abgeschlossen |
 | 2026-01-09 | Iteration 19 | Scoped Storage - Veraltete Storage-Permissions entfernt | ✅ Abgeschlossen |
+| 2026-01-09 | Iteration 20 | CI/CD Pipeline und Dokumentation | ✅ Abgeschlossen |
 
 ---
 
@@ -2310,4 +2448,4 @@ Nach der Änderung sollte:
 
 ---
 
-**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 19 - Scoped Storage - Veraltete Storage-Permissions entfernt)
+**Letzte Aktualisierung:** 9. Januar 2026 (Iteration 20 - CI/CD Pipeline und Dokumentation)
