@@ -12,8 +12,8 @@ Die Pipeline besteht aus zwei Jobs:
 ## Trigger
 
 Die Pipeline wird automatisch ausgelöst, wenn:
-- Ein Git Tag mit dem Format `v*` gepusht wird (z.B. `v1.0.0`)
-- Manuell über die GitHub Actions UI (`workflow_dispatch`)
+- Ein Git Tag mit dem Format `v*` gepusht wird (z.B. `v1.0.0`) - **erstellt automatisch ein Release**
+- Manuell über die GitHub Actions UI (`workflow_dispatch`) - **erstellt nur Build, kein Release** (außer wenn Version angegeben wird)
 
 ## Workflow-Schritte
 
@@ -58,10 +58,21 @@ git push origin v1.1.0
 
 ### Manuelles Auslösen
 
+**Option 1: Nur Build (kein Release)**
 1. Gehe zu **Actions** Tab im GitHub Repository
 2. Wähle **Build and Release** Workflow
 3. Klicke auf **Run workflow**
 4. Wähle Branch und klicke auf **Run workflow**
+5. **Hinweis:** Release-Job wird übersprungen, da kein Tag vorhanden ist
+
+**Option 2: Build + Release (mit Version)**
+1. Gehe zu **Actions** Tab im GitHub Repository
+2. Wähle **Build and Release** Workflow
+3. Klicke auf **Run workflow**
+4. Wähle Branch
+5. **Wichtig:** Gib im Feld "Version" eine Version ein (z.B. `1.0.0`)
+6. Klicke auf **Run workflow**
+7. Release wird mit Tag `v{version}` erstellt
 
 ## Release-Artefakte
 
@@ -133,9 +144,17 @@ Die Pipeline verwendet JDK 21. Um die Version zu ändern, bearbeite `.github/wor
 
 ### Release wird nicht erstellt
 
+**Bei Git Tag:**
 1. Stelle sicher, dass der Tag mit `v` beginnt (z.B. `v1.0.0`)
 2. Prüfe, ob `GITHUB_TOKEN` verfügbar ist (automatisch bei GitHub Actions)
 3. Prüfe Repository-Berechtigungen
+
+**Bei manuellem Auslösen:**
+1. **Wichtig:** Der Release-Job wird nur ausgeführt, wenn:
+   - Ein Git Tag mit `v*` gepusht wurde, ODER
+   - Beim manuellen Auslösen eine Version im Input-Feld angegeben wurde
+2. Wenn kein Release erstellt wird, prüfe die Workflow-Logs auf "skipped" Meldungen
+3. Um ein Release manuell zu erstellen, gib beim `workflow_dispatch` eine Version ein (z.B. `1.0.0`)
 
 ### Checksumme stimmt nicht überein
 

@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'  # Triggered when a tag starting with 'v' is pushed (e.g., v1.0.0)
   workflow_dispatch:  # Allows manual triggering from GitHub Actions UI
+    inputs:
+      version:
+        description: 'Version tag (e.g., 1.0.0) - will create release v{version}'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -50,11 +55,13 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.version != '')
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags
       
       - name: Download APK artifact
         uses: actions/download-artifact@v4
@@ -62,16 +69,34 @@ jobs:
           name: qr-generator-apk
           path: .
       
-      - name: Extract version from tag
+      - name: Extract version from tag or input
         id: get_version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            # Extract from tag
+            VERSION=${GITHUB_REF#refs/tags/v}
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.version }}" != "" ]]; then
+            # Use input version
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            echo "Error: No version found"
+            exit 1
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
+      
+      - name: Read checksum
+        id: read_checksum
+        run: |
+          CHECKSUM=$(cat qr-generator.apk.sha256sum)
+          echo "checksum<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHECKSUM" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ steps.get_version.outputs.version }}
           files: |
             qr-generator.apk
             qr-generator.apk.sha256sum
@@ -90,7 +115,7 @@ jobs:
             
             ### Checksum
             ```
-            $(cat qr-generator.apk.sha256sum)
+            ${{ steps.read_checksum.outputs.checksum }}
             ```
           draft: false
           prerelease: false
